@@ -1,0 +1,21 @@
+.btn_group{
+    width:165PX;
+    margin: 10PX auto;
+}
+
+.btn_item{
+    display: inline-block;
+    width: 80PX;
+    height: 80PX;
+    line-height: 80PX;
+    color: #ffffff;
+    text-align: center;
+    margin: 1PX;
+}
+.adv_wrap{
+    position: fixed;
+    bottom: 0;
+    height: 100PX;
+    width: 100%;
+    background-color: blueviolet;
+}

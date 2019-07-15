@@ -1,0 +1,13 @@
+.info_wrap{
+    padding: 20PX;
+    text-align: center;
+    background-color: #5daf34;
+    color: #ffffff;
+}
+.avatar{
+    width:80PX;
+    height:80PX;
+    border-radius:50%;
+    margin:0 auto;
+    display:block;
+}

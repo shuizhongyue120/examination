@@ -1,0 +1,10 @@
+.paper_item{
+    height: 30PX;
+    line-height: 30PX;
+    padding: 10PX 5PX;
+    border-bottom: 1PX solid #dbdbdb;
+}
+.item_btn{
+    vertical-align:middle;
+    float:right;
+}
