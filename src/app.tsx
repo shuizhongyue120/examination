@@ -5,6 +5,8 @@ import {Provider} from '@tarojs/redux'
 import Index from './pages/index'
 import {getLoginUrl} from "./constants";
 
+import {sendRequest} from "./function/request";
+
 import configStore from './store'
 
 import './app.css'
@@ -54,7 +56,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    //this.loginAndRegister();
+    this.loginAndRegister();
   }
 
   componentDidShow() {
@@ -90,20 +92,16 @@ class App extends Component {
           Taro
             .getUserInfo()
             .then(res => {
-             // console.log("getUserInfo", res);
+              // console.log("getUserInfo", res);
               let {encryptedData, iv} = res;
               Taro
                 .login()
                 .then(res2 => {
                   //console.log(res2);
-                  Taro.request({
-                    url: getLoginUrl(),
-                    method: "POST",
-                    data: {
-                      code: res2.code,
-                      username: encryptedData,
-                      password: iv
-                    }
+                  sendRequest("POST", getLoginUrl(), {
+                    code: res2.code,
+                    username: encryptedData,
+                    password: iv
                   }).then(data => {
                     console.log("login msg:", data);
                   })
