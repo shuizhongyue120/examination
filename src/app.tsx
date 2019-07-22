@@ -3,10 +3,7 @@ import Taro, {Component, Config} from '@tarojs/taro'
 import {Provider} from '@tarojs/redux'
 
 import Index from './pages/index'
-import {getLoginUrl} from "./constants";
-
-import {sendRequest} from "./function/request";
-
+import {goLogin, getLoginToken, checkLogin} from "./function/user";
 import configStore from './store'
 
 import './app.css'
@@ -56,11 +53,11 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.loginAndRegister();
+    //this.loginAndRegister();
   }
 
   componentDidShow() {
-    //this.loginAndRegister();
+    this.loginAndRegister();
   }
 
   componentDidHide() {}
@@ -76,39 +73,49 @@ class App extends Component {
     )
   }
 
+  private tokenHandle() {
+    Taro
+      .getUserInfo()
+      .then(user => {
+        let {encryptedData, iv} = user;
+        getLoginToken(encryptedData, iv).then(()=>{
+          Taro.setStorageSync("loginover","1");
+        });
+      })
+  }
+
+  private loginAndTokenHandle() {
+    Taro
+      .getUserInfo()
+      .then(user => {
+        let {encryptedData, iv} = user;
+        goLogin(encryptedData, iv).then(() => {
+          this.tokenHandle();
+        });
+      })
+  }
+
   private loginAndRegister() {
+    Taro.setStorageSync("loginover","0");
     Taro
       .getSetting({})
       .then(res => {
         if (!res.authSetting['scope.userInfo']) {
-          Taro.setStorage({key: "userenable", data: "0"});
-          Taro
-            .authorize({scope: 'scope.userInfo'})
-            .then(data => {
-              console.log("authorize", data);
-            })
+          Taro.setStorageSync("loginover","1");
+          //未授权
         } else {
-          //已经授权
-          Taro
-            .getUserInfo()
-            .then(res => {
-              // console.log("getUserInfo", res);
-              let {encryptedData, iv} = res;
-              Taro
-                .login()
-                .then(res2 => {
-                  //console.log(res2);
-                  sendRequest("POST", getLoginUrl(), {
-                    code: res2.code,
-                    username: encryptedData,
-                    password: iv
-                  }).then(data => {
-                    console.log("login msg:", data);
-                  })
-                });
-            });
-          Taro.setStorage({key: "userenable", data: "1"});
+
+          if (checkLogin()) {
+            Taro.setStorageSync("loginover","1");
+           // this.tokenHandle();
+          } else {
+            this.loginAndTokenHandle();
+          }
         }
+
+      })
+      .catch(data => {
+        console.log("getSetting error", data);
       })
   }
 }

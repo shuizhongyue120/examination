@@ -10,6 +10,10 @@ page .question_wrap{
     padding: 20PX 10PX;
 }
 
+.question_wrap .at-tag{
+    vertical-align: top;
+}
+
 .choose_wrap{
     padding: 20PX 20PX;
     margin-top: 20PX;

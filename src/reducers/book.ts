@@ -1,12 +1,12 @@
-import {FetchPapers} from '../constants/paper'
+import {Fetch} from '../constants/book'
 
 const INITIAL_STATE = {
-  list: []
+  list: null
 }
 
 export default function book(state = INITIAL_STATE, action) {
   switch (action.type) {
-    case FetchPapers:
+    case Fetch:
       return {
         ...state,
         list: action.payload

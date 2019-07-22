@@ -3,7 +3,7 @@ import Taro, {Component, Config} from '@tarojs/taro'
 import {View, Button, Text, Progress} from '@tarojs/components'
 import {connect} from '@tarojs/redux'
 
-import {asyncFetchPapers} from '../../actions/book'
+import {fetchBooks} from '../../actions/book'
 
 import './index.css'
 
@@ -23,7 +23,7 @@ type PageStateProps = {
 }
 
 type PageDispatchProps = {
-  fetch: () => any
+  fetchBooks: () => any
 }
 
 type PageOwnProps = {}
@@ -39,8 +39,8 @@ interface Index {
 }
 
 @connect(({book}) => ({book}), (dispatch) => ({
-  fetch() {
-    dispatch(asyncFetchPapers())
+  fetchBooks() {
+    dispatch(fetchBooks(1))
   }
 }))
 class Index extends Component < IProps,
@@ -77,7 +77,7 @@ PageState > {
   componentDidMount() {
     this
       .props
-      .fetch();
+      .fetchBooks();
   }
   componentWillUnmount() {}
 
@@ -86,6 +86,7 @@ PageState > {
   componentDidHide() {}
 
   render() {
+    let {id} = this.$router.params;
     let {
       list = []
     } = this.state;
@@ -94,9 +95,14 @@ PageState > {
       <View className='index'>
         <View>
           {list.map(item => (
-            <View key={item.id} class="paper_item">
-            <Text>{item.id}、{item.name}</Text>
-            <Button data-num={item.id} size="mini" className='item_btn' type='primary' onClick={this.enterPaperHandle}>开始答题</Button>
+            <View key={id} class="paper_item">
+              <Text>{id}、{item.subject_category}</Text>
+              <Button
+                data-category={item.subject_category}
+                size="mini"
+                className='item_btn'
+                type='primary'
+                onClick={this.enterPaperHandle}>开始答题</Button>
             </View>
           ))
 }
@@ -107,9 +113,10 @@ PageState > {
   }
 
   private enterPaperHandle(e) {
-    let num = e.target.dataset.num;
+    let {id} = this.$router.params;
+    let category = e.target.dataset.category;
     Taro.navigateTo({
-      url: "../paper/index?id=" + num
+      url: "../paper/index?id=" + id + "&category=" + category
     });
   }
 }

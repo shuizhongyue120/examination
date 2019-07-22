@@ -4,8 +4,10 @@ import {View, Button, Text, Progress} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 
-import {asyncFetch, submit} from '../../actions/paper'
+import {fetch, submit} from '../../actions/paper'
 import {IQuestionItem} from "../../constants/paper"
+
+import {favorPaper} from "../../function/api"
 
 import './index.css'
 import "taro-ui/dist/weapp/css/index.css";
@@ -21,12 +23,12 @@ import "taro-ui/dist/weapp/css/index.css";
 
 type PageStateProps = {
   paper: {
-    list: any[]
+    list: IQuestionItem[]
   }
 }
 
 type PageDispatchProps = {
-  fetch: () => any
+  fetch: (id, category) => any
 }
 
 type PageOwnProps = {}
@@ -60,8 +62,8 @@ const tabBar = [
 ];
 
 @connect(({paper}) => ({paper}), (dispatch) => ({
-  fetch() {
-    dispatch(asyncFetch())
+  fetch(id, category) {
+    dispatch(fetch(id, category))
   }
 }))
 class Index extends Component < IProps,
@@ -91,15 +93,16 @@ PageState > {
     let {
       list = []
     } = nextProps.paper;
-    if (list.length > 0) {
+    if (list) {
       this.setState({list});
     }
 
   }
   componentDidMount() {
+    let {id, category} = this.$router.params;
     this
       .props
-      .fetch();
+      .fetch(id, category);
   }
   componentWillUnmount() {}
 
@@ -115,11 +118,13 @@ PageState > {
     } = this.state;
 
     if (list.length === 0) {
-      return <Progress percent={20} showInfo strokeWidth={2}/>
+      return;
     }
 
     let data = list[curIndex];
-    let choosesRadios = (data.chooses || []).map(item => ({label: item, value: item}));
+    let answer = JSON.parse(data.subject_answer||"{}");
+    let keys = Object.keys(answer).sort();
+    let choosesRadios = keys.map(item=>({label:answer[item],value:item}))
     tabBar[2].title = curIndex + "/" + list.length;
     return (
       <View className='index'>
@@ -128,7 +133,8 @@ PageState > {
         </View> */}
         <View class="question_wrap">
           <View>
-          <AtTag type='primary'active={true} size="small" circle>单选</AtTag><Text>{data.id} {data.name}</Text>
+            <AtTag type='primary' active={true} size="small" circle>{data.subject_type === "choice"?"单选":"简答"}</AtTag>
+            <Text style="margin-left:10px;">{data.subject_id}、{data.subject_name}</Text>
           </View>
           <View class="choose_wrap">
             <AtRadio
@@ -146,7 +152,9 @@ PageState > {
             onClick={this
             .handleClick
             .bind(this)}
-            current={1}
+            current={data.hasStar
+            ? 0
+            : 1}
             fixed={true}/>
         </View>
       </View>
@@ -161,7 +169,7 @@ PageState > {
     } = this.state;
     list = list.map((item, index) => {
       if (curIndex === index) {
-        item.answer = value;
+        item.subject_my_answer = value;
       }
       return item;
     });
@@ -189,17 +197,30 @@ PageState > {
         }
       })
     } else if (0 === value) {
+      this.favorHandle();
+    } else if (2 === value) {}
+  }
+  bookMarkHandle() {}
+  favorHandle() {
+    let {
+      list = [],
+      curIndex
+    } = this.state;
+    favorPaper(curIndex).then(data => {
       list = list.map((item, index) => {
         if (curIndex === index) {
-          item.answer = value;
+          item.hasStar = true;
         }
         return item;
       });
 
       this.setState({list});
       Taro.showToast({title: "收藏成功"});
-    } else {}
+    }).catch(() => {
+      Taro.showToast({title: "收藏失败", icon: "none"});
+    })
   }
+
 }
 
 // #region 导出注意

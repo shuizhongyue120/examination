@@ -1,23 +1,16 @@
-import {FetchPapers} from '../constants/paper'
+import {Fetch} from '../constants/book'
+import {fetchBookPapers} from '../function/api'
 
-
-export const fetchPapers = (list) => {
-  return {type: FetchPapers, payload: list}
-}
 
 // 异步的action
-export function asyncFetchPapers() {
+export function fetchBooks(id) {
   return dispatch => {
-    setTimeout(() => {
-      dispatch(fetchPapers([
-        {
-          id: 0,
-          name: "语文模拟考试1"
-        }, {
-          id: 1,
-          name: "语文模拟考试2"
-        }
-      ]))
-    }, 300);
+    fetchBookPapers({course_id:id}).then(({
+      data = null
+    }) => {
+      dispatch({
+        type: Fetch, payload: data
+      })
+    })
   }
 }

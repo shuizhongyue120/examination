@@ -1,10 +1,14 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Swiper, SwiperItem, Button} from '@tarojs/components'
+import {View, Swiper, SwiperItem, Button, Input} from '@tarojs/components'
+import {AtNoticebar} from 'taro-ui'
 import {connect} from '@tarojs/redux'
+import {fetchInfo, isLogin, fetchCourses} from "../../actions/user"
+import {goLogin, getLoginToken} from "../../function/user"
+import {sendRequest} from "../../function/api"
 
 import './index.css'
-
+import "taro-ui/dist/weapp/css/index.css";
 // #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
@@ -14,12 +18,20 @@ import './index.css'
 //
 // #endregion
 
-type PageStateProps = {}
-
-type PageDispatchProps = {}
+type PageStateProps = {
+  user: {
+    info: null,
+    logined: false,
+    courses: null
+  }
+}
+type PageDispatchProps = {
+  fetchInfo: () => any,
+  isLogin: () => any;
+  fetchCourses: () => any;
+}
 
 type PageOwnProps = {}
-
 type PageState = {}
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -28,12 +40,30 @@ interface Index {
   props : IProps;
 }
 
-@connect(({counter}) => ({counter}), (dispatch) => ({}))
-class Index extends Component<IProps, any>{
-  constructor(props, context){
+@connect(({user}) => ({user}), (dispatch) => ({
+  fetchInfo() {
+    dispatch(fetchInfo());
+  },
+  isLogin() {
+    dispatch(isLogin());
+  },
+  fetchCourses() {
+    dispatch(fetchCourses());
+  }
+}))
+class Index extends Component < IProps,
+any > {
+
+  private timer = 0;
+  constructor(props, context) {
     super(props, context);
     this.state = {
-      showLoginBtn:Taro.getStorageSync("userenable") !== "1"
+      showLoginBtn: false,
+      info: null,
+      courses: null,
+      url: "",
+      method: "GET",
+      param: ""
     };
   }
   /**
@@ -49,37 +79,100 @@ class Index extends Component<IProps, any>{
 
   componentWillReceiveProps(nextProps) {
     console.log(this.props, nextProps)
+    let {logined} = this.props.user;
+    let {info, courses} = this.state;
+    let nextLogined = nextProps.user.logined;
+    this.setState({
+      showLoginBtn: !nextLogined
+    });
+    if (!logined && nextLogined) {
+      this
+        .props
+        .fetchInfo();
+      this
+        .props
+        .fetchCourses();
+    }
+
+    if (nextLogined && !info && nextProps.user.info) {
+      this.setState({info:nextProps.user.info});
+    }
+
+    if (nextLogined && !courses && nextProps.user.courses) {
+      this.setState({courses:nextProps.user.courses});
+    }
+
+  }
+  componentDidMount() {
+    this.pullHandle();
   }
 
-  componentWillUnmount() {}
+  pullHandle() {
+    this.timer = setInterval(() => {
+      if ("1" === Taro.getStorageSync("loginover")) {
+        this
+          .props
+          .isLogin();
+        clearInterval(this.timer);
+      }
+      console.log("3333");
+    }, 100)
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
 
   componentDidShow() {}
 
   componentDidHide() {}
 
+  private getNoticeMsg() {
+    let {info, courses} = this.state;
+    let majorStr = "";
+    if (info) {
+      majorStr = info.category_name + " " + info.major_name;
+    }
+    let courseStr = "";
+    if (courses) {
+      courseStr = "（" + courses[0].course_name + "）";
+    }
+
+    return majorStr + courseStr;
+  }
+
   render() {
-   let showLoginBtn = this.state.showLoginBtn;
-    console.log(showLoginBtn);
+    let {showLoginBtn, url, method, param} = this.state;
+
+    let msg = this.getNoticeMsg();
     return (
       <View className='index'>
+
         <Swiper
-          className='test-h'
+          className='m_swiper'
           indicatorColor='#999'
           indicatorActiveColor='#333'
           circular
           indicatorDots
           autoplay>
-          <SwiperItem style="background-color:red;">
-            <View className='demo-text-1'>1</View>
+          <SwiperItem>
+            <image
+              mode="scaleToFill"
+              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/1.jpg?sign=38cf9db0ca42ad03813474c627883adf&t=1563608704"></image>
           </SwiperItem>
-          <SwiperItem style="background-color:gray;">
-            <View className='demo-text-2'>2</View>
+          <SwiperItem>
+            <image
+              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/2.jpg?sign=fbe75495cf7add454e2e528fbe81b913&t=1563608814"></image>
           </SwiperItem>
-          <SwiperItem style="background-color:blue;">
-            <View className='demo-text-3'>3</View>
+          <SwiperItem>
+            <image
+              mode="scaleToFill"
+              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/3.png?sign=f9f9b85dd27a43eb49a0549a6f5eceb2&t=1563608735"></image>
           </SwiperItem>
         </Swiper>
-
+        {msg && <View class="marjor_notice">
+          <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
+        </View>}
         <View class="btn_group">
           <View
             class="btn_item"
@@ -91,24 +184,99 @@ class Index extends Component<IProps, any>{
           <View class="btn_item" style="background-color: #e6a23c;">错题集</View>
           <View class="btn_item" style="background-color: #07c160;">收藏</View>
         </View>
+
         {showLoginBtn && <View style="text-align:center;">
-          <Button type="primary" size="mini" open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
-            点击授权
+          <Button
+            type="primary"
+            size="mini"
+            open-type="getUserInfo"
+            onGetUserInfo={this.getUserInfo}>
+            点击登录
           </Button>
         </View>
 }
-        <View class="adv_wrap">广告位</View>
+        <View style="text-align:center;">
+          <Input
+            type='text'
+            placeholder='接口名称，如auth/accounts/self'
+            value={url}
+            onChange={this
+            .onUrlHandle
+            .bind(this)}
+            style="border:1px solid #dbdbdb;width:90%;height:32px;"/>
+          <Input
+            type='text'
+            placeholder='请求方式'
+            value={method}
+            onChange={this
+            .onMethodHandle
+            .bind(this)}
+            style="border:1px solid #dbdbdb;width:90%;margin:10PX 0; height:32px; "/>
+          <Input
+            type='text'
+            placeholder="参数，如name:1,job:ccc"
+            value={param}
+            onChange={this
+            .onParamHanle
+            .bind(this)}
+            style="border:1px solid #dbdbdb; width:90%;height:32px; "/>
+          <Button
+            style="margin-top:10px;"
+            type="primary"
+            size="mini"
+            onClick={this
+            .testInterface
+            .bind(this)}>
+            调试接口
+          </Button>
+        </View>
+
+        {/* <View class="adv_wrap">广告位</View> */}
       </View>
     );
 
   }
   private getUserInfo(data) {
     console.log("getUserInfo", data);
-    this.setState({showLoginBtn:false});
+    let {encryptedData, iv} = data.detail;
+    goLogin(encryptedData, iv).then(res => {
+      getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    });
   }
 
   private enterExamHandle() {
     console.log("enterExamHandle");
-    Taro.navigateTo({url: "../book/index"});
+    Taro.navigateTo({url: "../book/index?id="+ 1});
+  }
+
+  private onUrlHandle(e) {
+    console.log(e.detail.value);
+    this.setState({url: e.detail.value});
+  }
+  private onMethodHandle(e) {
+    console.log(e.detail.value);
+    this.setState({method: e.detail.value});
+  }
+  private onParamHanle(e) {
+    console.log(e.detail.value);
+    this.setState({param: e.detail.value});
+  }
+
+  private testInterface() {
+    let {url, method, param} = this.state;
+    if (!url) {
+      Taro.showToast({title: "url 不合法"});
+      return;
+    }
+    let list = param.split(",");
+    let obj = {}
+    list.forEach(element => {
+      let list = element.split(/：|:/);
+      obj[list[0]] = list[1];
+    });
+    console.log(obj);
+    sendRequest(method, "http://kobejia.club:7778/" + url, obj).then(data => {
+      console.log(data);
+    });
   }
 }
