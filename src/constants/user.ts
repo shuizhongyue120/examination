@@ -1,3 +1,3 @@
-export const Login = 'LOGIN'
+export const Login = 'USERLOGIN'
 export const UserInfo = "USERINFO"
-export const Courses = "COURSES"
+export const Courses = "USERCOURSES"

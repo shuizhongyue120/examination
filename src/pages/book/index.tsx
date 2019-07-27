@@ -1,11 +1,13 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Button, Text, Progress} from '@tarojs/components'
+import {View, Button, Text } from '@tarojs/components'
+import {AtDivider, AtActivityIndicator } from 'taro-ui'
 import {connect} from '@tarojs/redux'
 
 import {fetchBooks} from '../../actions/book'
 
 import './index.css'
+//import "taro-ui/dist/weapp/css/index.css";
 
 // #region 书写注意
 //
@@ -23,13 +25,14 @@ type PageStateProps = {
 }
 
 type PageDispatchProps = {
-  fetchBooks: () => any
+  fetchBooks: (id:string) => any
 }
 
 type PageOwnProps = {}
 
 type PageState = {
   list?: any[];
+  loading?:boolean;
 }
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -39,8 +42,8 @@ interface Index {
 }
 
 @connect(({book}) => ({book}), (dispatch) => ({
-  fetchBooks() {
-    dispatch(fetchBooks(1))
+  fetchBooks(id) {
+    dispatch(fetchBooks(id))
   }
 }))
 class Index extends Component < IProps,
@@ -60,7 +63,8 @@ PageState > {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      list: []
+      list: [],
+      loading:true
     }
   }
 
@@ -69,15 +73,17 @@ PageState > {
     let {
       list = []
     } = nextProps.book;
-    if (list.length > 0) {
-      this.setState({list});
+    if (!this.props.book.list&&list.length > 0) {
+      this.setState({list, loading:true});
     }
 
   }
   componentDidMount() {
+    let {id} = this.$router.params;
+    this.setState({loading:true});
     this
       .props
-      .fetchBooks();
+      .fetchBooks(id);
   }
   componentWillUnmount() {}
 
@@ -88,11 +94,15 @@ PageState > {
   render() {
     let {id} = this.$router.params;
     let {
-      list = []
+      list = [],loading
     } = this.state;
 
     return (
-      <View className='index'>
+      <View className='book'>
+        {loading&& <View >
+        <AtActivityIndicator style="text-align:center" content='加载中...'></AtActivityIndicator>
+        </View>
+        }
         <View>
           {list.map(item => (
             <View key={id} class="paper_item">
@@ -105,7 +115,9 @@ PageState > {
                 onClick={this.enterPaperHandle}>开始答题</Button>
             </View>
           ))
-}
+        }
+        
+        {0 === list.length&& !loading&& <AtDivider content='没有题目可选，请重新选择课程' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
         </View>
       </View>
     )

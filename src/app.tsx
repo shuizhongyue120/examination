@@ -7,7 +7,7 @@ import {goLogin, getLoginToken, checkLogin} from "./function/user";
 import configStore from './store'
 
 import './app.css'
-
+import "taro-ui/dist/weapp/css/index.css";
 // 如果需要在 h5 环境中开启 React Devtools 取消以下注释： if (process.env.NODE_ENV !==
 // 'production' && process.env.TARO_ENV === 'h5')  {   require('nerv-devtools')
 // }
@@ -25,7 +25,7 @@ class App extends Component {
    */
   config : Config = {
     pages: [
-      'pages/index/index', "pages/book/index", "pages/paper/index", 'pages/my/index'
+      'pages/index/index', "pages/book/index", "pages/paper/index", "pages/favor/index", 'pages/my/index'
     ],
     window: {
       backgroundTextStyle: 'light',
@@ -36,6 +36,7 @@ class App extends Component {
     },
     tabBar: {
       backgroundColor: "#fefefe",
+      selectedColor:"#2747DE",
       list: [
         {
           text: "首页",
@@ -46,6 +47,7 @@ class App extends Component {
           text: "我的",
           pagePath: "pages/my/index",
           iconPath: "static/icon/user.png",
+          
           selectedIconPath: "static/icon/user_act.png"
         }
       ]

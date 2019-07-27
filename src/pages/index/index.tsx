@@ -1,6 +1,13 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Swiper, SwiperItem, Button, Input} from '@tarojs/components'
+import {
+  View,
+  Swiper,
+  SwiperItem,
+  Button,
+  Input,
+  Picker
+} from '@tarojs/components'
 import {AtNoticebar} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 import {fetchInfo, isLogin, fetchCourses} from "../../actions/user"
@@ -8,7 +15,7 @@ import {goLogin, getLoginToken} from "../../function/user"
 import {sendRequest} from "../../function/api"
 
 import './index.css'
-import "taro-ui/dist/weapp/css/index.css";
+//import "taro-ui/dist/weapp/css/index.css";
 // #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
@@ -22,7 +29,7 @@ type PageStateProps = {
   user: {
     info: null,
     logined: false,
-    courses: null
+    courses: undefined
   }
 }
 type PageDispatchProps = {
@@ -60,7 +67,8 @@ any > {
     this.state = {
       showLoginBtn: false,
       info: null,
-      courses: null,
+      courses: undefined,
+      course: "",
       url: "",
       method: "GET",
       param: ""
@@ -95,11 +103,11 @@ any > {
     }
 
     if (nextLogined && !info && nextProps.user.info) {
-      this.setState({info:nextProps.user.info});
+      this.setState({info: nextProps.user.info});
     }
 
     if (nextLogined && !courses && nextProps.user.courses) {
-      this.setState({courses:nextProps.user.courses});
+      this.setState({courses: nextProps.user.courses});
     }
 
   }
@@ -128,21 +136,24 @@ any > {
   componentDidHide() {}
 
   private getNoticeMsg() {
-    let {info, courses} = this.state;
+    let {info} = this.state;
     let majorStr = "";
     if (info) {
       majorStr = info.category_name + " " + info.major_name;
     }
-    let courseStr = "";
-    if (courses) {
-      courseStr = "（" + courses[0].course_name + "）";
-    }
 
-    return majorStr + courseStr;
+    return majorStr;
   }
 
   render() {
-    let {showLoginBtn, url, method, param} = this.state;
+    let {
+      showLoginBtn,
+      courses = [],
+      course,
+      url,
+      method,
+      param
+    } = this.state;
 
     let msg = this.getNoticeMsg();
     return (
@@ -174,15 +185,26 @@ any > {
           <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
         </View>}
         <View class="btn_group">
-          <View
+          <Picker
             class="btn_item"
             style="background-color: #409eff;"
-            onClick={this
+            value={course}
+            mode='selector'
+            range={courses.map(item => item.course_name)}
+            onChange={this
             .enterExamHandle
-            .bind(this)}>模拟考试</View>
-          <View class="btn_item" style="background-color: #5daf34;">真题解析</View>
+            .bind(this)}>模拟考试</Picker>
+          <Picker class="btn_item" style="background-color: #5daf34;">真题解析</Picker>
           <View class="btn_item" style="background-color: #e6a23c;">错题集</View>
-          <View class="btn_item" style="background-color: #07c160;">收藏</View>
+          <Picker
+            class="btn_item"
+            value={course}
+            mode='selector'
+            range={courses.map(item => item.course_name)}
+            onChange={this
+            .enterFavorHandle
+            .bind(this)}
+            style="background-color: #07c160;">收藏</Picker>
         </View>
 
         {showLoginBtn && <View style="text-align:center;">
@@ -244,9 +266,25 @@ any > {
     });
   }
 
-  private enterExamHandle() {
-    console.log("enterExamHandle");
-    Taro.navigateTo({url: "../book/index?id="+ 1});
+  private enterExamHandle(e) {
+    let idx = e.detail.value;
+    let course = this.state.courses[idx];
+    if (course) {
+      Taro.navigateTo({
+        url: "../book/index?id=" + course.course_id
+      });
+    }
+  }
+
+  private enterFavorHandle(e){
+    let idx = e.detail.value;
+    let course = this.state.courses[idx];
+    console.log("enterFavorHandle", course);
+    if (course) {
+      Taro.navigateTo({
+        url: "../favor/index?name=" + course.course_name
+      });
+    }
   }
 
   private onUrlHandle(e) {

@@ -16,16 +16,25 @@ export const sendRequest = function (method, url, data) {
     })
 }
 
-export const favorPaper = (id) => {
-    return sendRequest("POST", "", {id});
+export const favorPaper = (course_id, subject_id, action) => {
+    return sendRequest("POST", "v1/self/course/" + course_id + "/subject/" + subject_id + "/favorite", {action});
 }
 
+export const submitPaper = (course_id, subject_category, submits) => {
+    return sendRequest("POST", "v1/self/course/" + course_id + "/exam", {subject_category, submits});
+}
 
+export const fetchPaperResults = (course_id, exam_id, subject_category) => {
+    return sendRequest("GET", "v1/self/course/" + course_id + "/exam", {subject_category, exam_id});
+}
 
-export const fetchBookPapers = (data) => {
+export const favorList = () => {
+    return sendRequest("GET", "v1/self/favorites", null);
+}
+
+export const fetchCategory = (data) => {
     return sendRequest("GET", "v1/self/subjects/category", data);
 }
-
 
 export const fetchPapers = (data) => {
     return sendRequest("GET", "v1/self/subjects", data);

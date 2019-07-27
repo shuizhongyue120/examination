@@ -1,8 +1,7 @@
 import {Fetch, Submit} from '../constants/paper'
 
 const INITIAL_STATE = {
-  list: null,
-  sublist: []
+  list: null
 }
 
 export default function paper(state = INITIAL_STATE, action) {

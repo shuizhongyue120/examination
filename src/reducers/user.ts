@@ -3,7 +3,7 @@ import {Login, UserInfo, Courses} from '../constants/user'
 const INITIAL_STATE = {
   logined: false,
   info: null,
-  courses: null
+  courses: undefined
 }
 
 export default function user(state = INITIAL_STATE, action) {

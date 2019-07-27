@@ -1,17 +1,31 @@
-.tabbar_wrap{
-    position: fixed;
-    width: 100%;
-    bottom: 0;
+
+
+page{
+    overflow-x:hidden;
 }
-.header_wrap{
-    padding: 20PX 10PX;
+.question_main{
+    display:flex;
+    flex-direction:row;
+    width:400vw;
 }
-page .question_wrap{
+:-webkit-scrollbar {
+    display: none;
+}
+.question_main .question_wrap{
+    height:100vh;
+    width: 100vw;
+    box-sizing:border-box;
     padding: 20PX 10PX;
 }
 
 .question_wrap .at-tag{
     vertical-align: top;
+}
+
+.tabbar_wrap{
+    position: fixed;
+    width: 100%;
+    bottom: 0;
 }
 
 .choose_wrap{
@@ -22,4 +36,99 @@ page .question_wrap{
     font-weight:800;
     font-size:20PX;
 }
-    
+
+.answer_wrap{
+    position: fixed;
+    z-index: 998;
+    width: 100vw;
+    height: 100vh;
+    top: 0px;
+    left: 0px;
+    background-color: #fff;
+}
+.answer_grade .grade{
+    height: 160PX;
+    padding-top: 130px;
+    background: #13ce66;
+    color: #fff;
+}
+.grade_round{
+    width: 80PX;
+    height: 55PX;
+    padding-top:25PX;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 1PX solid #fff;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+}
+.grade_round .text{
+    font-size: 20PX;
+    font-weight: 800;
+}
+
+.answer_grade .desc{
+    display: flex;
+    flex-direction: row;
+}
+.desc_item{
+    width: 50%;
+    padding: 10PX;
+    text-align: center;
+}
+
+.answer_item,.cata_item{
+    display: table-cell;
+    height: 30PX;
+    width: 30PX;
+    border-radius: 50%;
+    border: 1PX solid #dbdbdb;
+    text-align: center;
+    vertical-align: middle;
+   
+}
+.answer_item.right{
+    background-color: #13ce66;
+    border: 1PX solid #13ce66;
+    color: #fff;
+}
+
+.answer_item.wrong{
+    background-color: #e6a23c;
+    border: 1PX solid #e6a23c;
+    color: #fff;
+}
+.answer_title {
+    padding: 10PX 20PX;
+    font-weight:800;
+}
+
+.answer_list,.cata+list{
+    padding: 10PX 20PX;
+}
+
+.answer_wrap button{
+    width: 200PX;
+}
+
+.cata_mask{
+    position: fixed;
+    z-index: 998;
+    bottom:0;
+    left:0;
+    width: 100%;
+    height: 100vh;
+    background: #0000024d;
+}
+.cata_wrap {
+    position: fixed;
+    padding: 20PX;
+    box-sizing: border-box;
+    z-index: 999;
+    bottom:0;
+    left:0;
+    width: 100%;
+    height: 50vh;
+    background: #fff;
+}

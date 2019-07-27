@@ -8,7 +8,7 @@ import {fetchInfo, isLogin} from "../../actions/user"
 import {goLogin, getLoginToken} from "../../function/user"
 
 import './index.css'
-import "taro-ui/dist/weapp/css/index.css";
+//import "taro-ui/dist/weapp/css/index.css";
 
 // #region 书写注意
 //

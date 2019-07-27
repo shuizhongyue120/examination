@@ -1,19 +1,59 @@
-export const Fetch = 'FETCH'
-export const Submit = 'SUBMIT'
-export const Favor = 'FAVOR'
+export const Fetch = 'FETCHSUBS'
+export const Submit = 'SUBMITSUBS'
+export const Favor = 'FAVORSUB'
 
 export interface IQuestionItem {
-    subject_id?:string;
-    subject_name?:string;
-    subject_answer?:string;
-    subject_right_answer?:string;
-    subject_my_answer?:string;
-    subject_tips?:string;
-    subject_type?: "choice" | "text";//单选，简答
-    hasStar?:boolean;
-    subject_category?:string;
-    course_id:string;
+    subject_id?: number;
+    subject_name?: string;
+    subject_grade?: number; //分数
+    subject_answer?: string;
+    subject_right_answer?: string;
+    subject_my_answer?: string;
+    subject_tips?: string;
+    subject_type?: "choice" | "text"; //单选，简答
+    is_favorite?: number;
+    hasStar?: boolean;
+    subject_category?: string;
+    course_id?: number;
 }
+//闭区间
+export const colorGradeMap = [
+    {
+        min: 100,
+        max: 100,
+        color: "#18F218"
+    }, {
+        min: 90,
+        max: 99,
+        color: "#1AAD19"
+    },
+    {
+        min: 80,
+        max: 89,
+        color: "#7FF200"
+    },
+    {
+        min: 70,
+        max: 79,
+        color: "#BFF200"
+    },
+    {
+        min: 60,
+        max: 69,
+        color: "#FFE500"
+    },
+    {
+        min: 50,
+        max: 59,
+        color: "#FFB200"
+    },
+    {
+        min: 0,
+        max: 49,
+        color: "#FF6B01"
+    }
+]
+
 
 /**
  * course_id

@@ -1,0 +1,30 @@
+.tabbar_wrap{
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+.header_wrap{
+    padding: 20PX 10PX;
+}
+page .question_wrap{
+    padding: 20PX 10PX;
+}
+
+.question_wrap .at-tag{
+    vertical-align: top;
+}
+
+.choose_wrap, answer_wrap{
+    padding: 20PX 20PX;
+    margin-top: 20PX;
+}
+.at-radio__icon .at-icon {
+    font-weight:800;
+    font-size:20PX;
+}
+
+.answer_title{
+    margin-bottom:10px;
+    font-weight: 800;
+}
+    
