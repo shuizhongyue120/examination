@@ -217,7 +217,36 @@ PageState > {
           onTouchend={this
           .touchEndHandle
           .bind(this)} style={"width:" + count*100+"vw;"}>
-
+          {list.map(item => {
+            return <View class="question_wrap" key={"qus_"+item.subject_id}>
+              <View>
+                <AtTag type='primary' active={true} size="small" circle>{isChoice
+                    ? "单选"
+                    : "简答"}</AtTag>
+                <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+              </View>
+              <View class="choose_wrap">
+                <AtRadio
+                  options={choosesRadios}
+                  value={anwser}
+                  onClick={this
+                  .handleChange
+                  .bind(this)}/>
+              </View>
+              {isOver &&<View class="question_answer_wrap">
+                <View class="answer_title">
+                  <Text>题目解析：</Text>
+                </View>
+                <View>
+                  <Text>正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text></Text>
+                </View>
+                <View>
+                  <Text>{item.subject_tips}</Text>
+                </View>
+              </View>
+              }
+            </View>
+          })}
         </View>
 
         <View>
