@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro'
+import {error401Msg2code} from '../constants/index'
 import {Login, LoginOut, UserInfo, Courses} from '../constants/user'
 import {fetchUserInfo, fetchUserCourses} from '../function/user'
 
@@ -29,8 +30,17 @@ export function fetchInfo() {
     fetchUserInfo().then(res => {
       if (200 == res.statusCode) {
         dispatch({type: UserInfo, payload: res.data})
-      } else {
+      } else if (404 == res.statusCode || 403 == res.statusCode) {
+        Taro.setStorageSync("loginover", res.statusCode);
         dispatch({type: UserInfo, payload: undefined});
+      } else if (401 === res.statusCode) { //无效
+        let code = error401Msg2code[res.data.error_code];
+        Taro.setStorageSync("loginover", code);
+        dispatch({type: UserInfo, payload: undefined});
+      } else {
+        Taro.setStorageSync("loginover", 1);
+        dispatch({type: UserInfo, payload: undefined});
+        Taro.showToast({title: "读取用户信息失败，请重试。"})
       }
 
     })
@@ -43,8 +53,18 @@ export function fetchCourses() {
     fetchUserCourses().then(res => {
       if (200 == res.statusCode) {
         dispatch({type: Courses, payload: res.data})
-      } else {
+      } else if (403 == res.statusCode) { //未审核通过
         dispatch({type: Courses, payload: undefined});
+      } else if (404 == res.statusCode) {
+        dispatch({type: Courses, payload: undefined});
+      } else if (401 === res.statusCode) { //无效
+        let code = error401Msg2code[res.data.error_code];
+        Taro.setStorageSync("loginover", code);
+        dispatch({type: Courses, payload: undefined});
+      } else {
+        Taro.setStorageSync("loginover", 1);
+        dispatch({type: Courses, payload: undefined});
+        Taro.showToast({title: "读取课程失败，请重试。"})
       }
     })
   }

@@ -1,4 +1,4 @@
-import {Fetch} from '../constants/error'
+import {Fetch, FetchErrorBook} from '../constants/error'
 
 const INITIAL_STATE = {
   list: null
@@ -7,6 +7,11 @@ const INITIAL_STATE = {
 export default function error(state = INITIAL_STATE, action) {
   switch (action.type) {
     case Fetch:
+      return {
+        ...state,
+        list: action.payload
+      }
+      case FetchErrorBook:
       return {
         ...state,
         list: action.payload

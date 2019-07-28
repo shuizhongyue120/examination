@@ -111,7 +111,6 @@ PageState > {
     this.state = {
       list: undefined,
       cur: undefined,
-      anwser: "",
       animation: undefined,
       showCata:false, //是否展示题目目录
       isOpenResPan:false,//是否展示考试结果pan
@@ -167,7 +166,6 @@ PageState > {
     this.setState({
       list: undefined,
       cur: undefined,
-      anwser: "",
       animation: undefined,
       showCata:false, //是否展示题目目录
       isOpenResPan:false,//是否展示考试结果pan
@@ -184,7 +182,6 @@ PageState > {
     let {
       list = [],
       cur = {},
-      anwser = "",
       animation,
       showCata =false,
       isOver,
@@ -192,14 +189,7 @@ PageState > {
       leftSecond=3600
     } = this.state;
     let count = list.length;
-
-    let answer = JSON.parse(cur.subject_answer || "{}");
-    let keys = Object
-      .keys(answer)
-      .sort();
-    let choosesRadios = keys.map(item => ({label: answer[item], value: item}))
     let idx = list.findIndex(item => cur.subject_id === item.subject_id);
-   
     if(isOver){
       overTabBar[1].title = (idx + 1) + "/" + count;
     } else {
@@ -225,6 +215,11 @@ PageState > {
           .touchEndHandle
           .bind(this)} style={"width:" + count*100+"vw;"}>
           {list.map(item => {
+            let answers = JSON.parse(item.subject_answer || "{}");
+            let keys = Object
+             .keys(answers)
+             .sort();
+           let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
             return <View class="question_wrap" key={"qus_"+item.subject_id}>
               <View>
                 <AtTag type='primary' active={true} size="small" circle>{isChoice
@@ -235,7 +230,7 @@ PageState > {
               <View class="choose_wrap">
                 <AtRadio
                   options={choosesRadios}
-                  value={anwser}
+                  value={item.subject_my_answer}
                   onClick={this
                   .handleChange
                   .bind(this)}/>
@@ -288,7 +283,7 @@ PageState > {
    let {list = [], cur ={}} = this.state;
   return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}><View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
       list.map(item => {
-        let cls = item.subject_id === cur.subject_id
+        let cls = (item.subject_id||1) <= (cur.subject_id||1)
           ? "right"
           : "";
         return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
@@ -349,7 +344,7 @@ PageState > {
       </View>
       {choiceList.length > 0 &&< View class="answer_title"> 单选题 </View>}
       {choiceList.length > 0 &&
-        <View class = "answer_list" > {
+        <ScrollView scroll-y={true} class = "answer_list" > {
           choiceList.map(item => {
             let cls = item.subject_right_answer === item.subject_my_answer
               ? "right"
@@ -358,7 +353,7 @@ PageState > {
               <Text>{item.subject_id}</Text>
             </View>
           })
-        } </View>
+        } </ScrollView>
       }
       {textList.length > 0 &&< View class="answer_title"> 简答题 </View>}
       {textList.length > 0 &&<View class="answer_list">
@@ -417,15 +412,18 @@ PageState > {
     }
 
     let {pageX, pageY} = e.changedTouches[0];
-    let {x,y} = this.startPosition;
-    let lenY = Math.abs(pageY- y);
-    let lenX = Math.abs(pageX- x)
+    let {x, y} = this.startPosition;
+    let lenY = Math.abs(pageY - y);
+    let lenX = pageX - x;
     let diff = 0;
-    if (lenX >= 50 && lenY<30) {
+    if (lenX >= 50) {
       diff = -1;
     }
-    if (lenX <= -50 && lenY<30) {
+    if (lenX <= -50) {
       diff = 1;
+    }
+    if(lenY>30){
+      return;
     }
     let {
       list = [],
@@ -478,20 +476,20 @@ PageState > {
       return item;
     });
 
-    this.setState({list, anwser: value});
+    this.setState({list});
     setTimeout(() => {
       let isLast = idx === list.length - 1;
-      let nextIdx = isLast
-        ? idx
-        : idx + 1;
+      if(isLast){
+        Taro.showToast({title:"您已完成考试，请交卷。"});
+        return;
+      }
+
+      let nextIdx = idx + 1;
       this.setState({
         cur: Object.assign({}, list[nextIdx]),
-        anwser: isLast
-          ? value
-          : "",
         animation: this.getAnimate(nextIdx)
       });
-    }, 300);
+    }, 200);
   }
   formatTime(second: number){
     let mins = Math.floor(second/60);
@@ -557,7 +555,6 @@ PageState > {
       this.setState({showCata:true});
     }
   }
-  bookMarkHandle() {}
   favorHandle() {
     let {
       list = [],
@@ -567,14 +564,15 @@ PageState > {
       ? 0
       : 1;
     favorPaper(cur.course_id, cur.subject_id, action).then(data => {
-      list = list.map((item, index) => {
+      list = list.map((item) => {
         if (cur.subject_id === item.subject_id) {
           item.is_favorite = action;
+          cur.is_favorite = action;
         }
         return item;
       });
 
-      this.setState({list});
+      this.setState({list,cur});
       Taro.showToast({
         title: action
           ? "收藏成功"

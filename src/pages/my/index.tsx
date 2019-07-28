@@ -25,7 +25,7 @@ type PageStateProps = {
 }
 type PageDispatchProps = {
   fetchInfo: () => any;
-  loginOut:()=>any;
+  loginOut: () => any;
   isLogin: () => any;
 }
 
@@ -52,11 +52,22 @@ interface Index {
 class Index extends Component < IProps,
 any > {
   private timer = 0;
+  private codeTxt = {
+    "0": "empty",
+    "-1": "授权登录",
+    "201": "退出登录",
+    "4010": "一键注册",
+    "4011": "重新登录",
+    "4012": "重新登录",
+    "1": "重新登录",
+    "404": "一键注册"
+  };
+
   constructor(props, context) {
     super(props, context);
     this.state = {
-      showLoginBtn: !Taro.getStorageSync("access_token"),
-      info: null
+      code: "0",
+      info: undefined
     };
 
   }
@@ -74,72 +85,66 @@ any > {
 
   componentWillReceiveProps(nextProps) {
     console.log(this.props, nextProps)
-    let {logined, info} = this.props.user;
-    let nextLogined = nextProps.user.logined;
-    this.setState({
-      showLoginBtn: !nextLogined
-    });
-    if(!nextLogined){
-      this.setState({
-        showLoginBtn: true
-      });
+    let {info} = this.props.user;
+    let nextInfo = nextProps.user.info;
+    if (!info && nextInfo) {
+      this.setState({info: nextProps.user.info});
       return;
     }
-    if (!logined && nextLogined && !info) {
-      this
-        .props
-        .fetchInfo();
-        return;
-    }
 
-    this.setState({info: nextProps.user.info});
   }
   componentDidMount() {}
 
   pullHandle() {
     this.timer = setInterval(() => {
-      if ("1" === Taro.getStorageSync("loginover")) {
+      let loginover = Taro.getStorageSync("loginover");
+      if (loginover == 201) {
         this
           .props
-          .isLogin();
+          .fetchInfo();
         clearInterval(this.timer);
+        this.setState({code: loginover, info: undefined});
+        return;
       }
-      console.log("3333");
-    }, 100)
+      if (loginover != 0) {
+        clearInterval(this.timer);
+        this.setState({code: loginover, info: undefined});
+        return;
+      }
+
+      console.log("wait ", loginover);
+    }, 50)
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
   }
 
-  componentWillUnmount() {}
-
   componentDidShow() {
-    console.log(this.props);
-    let {
-      logined,
-      info = {}
-    } = this.props.user;
-    this.setState({
-      showLoginBtn: !logined,
-      info
-    });
+    this.pullHandle();
   }
 
   componentDidHide() {}
 
   render() {
     let {
-      showLoginBtn,
+      code,
       info = {}
     } = this.state;
-    let major = "暂无";
-    if (info) {
-      info = info || {};
-      major = info.category_name + " ● " + info.major_name;
-    }
+
+    let {
+      category_name = "暂无",
+      major_name = "暂无",
+      avatar
+    } = info;
+    let major = category_name + " ● " + major_name;
+    avatar = avatar || "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/default.jpeg?sign=3" +
+      "c08d0764e6b1e93598f3860ee8fddb4&t=1564321663";
     return (
       <View className='index'>
         <View class="info_wrap" style="">
-          <Image src={info.avatar} class="avatar"></Image>
+          <Image src={avatar} class="avatar"></Image>
           <View style="margin-top:10px;">
-            <Text>{info.nickname}</Text>
+            <Text>{info.nickname || "无"}</Text>
           </View>
         </View>
 
@@ -149,23 +154,56 @@ any > {
               title='专业'
               note={major}
               arrow='right'
-              onClick={this.majorHandle}
+              onClick={this
+              .majorHandle
+              .bind(this)}
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
+            <AtListItem
+              title='待补充1'
+              note={"待完善....."}
+              arrow='right'
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
+            <AtListItem
+              title='待补充2'
+              note={"待完善....."}
+              arrow='right'
               thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
           </AtList>
         </View>
         <View style="text-align:center;margin-top:20PX">
-          {showLoginBtn
-            ? <Button type="primary" open-type="getUserInfo" onGetUserInfo={this.getUserInfo}
+          {-1 == code && <Button
+            type="primary"
+            open-type="getUserInfo"
+            onGetUserInfo={this.getUserInfo}
             style="width:70vw;">
-                登录
-              </Button>
-            : <Button
-              onClick={this
-              .loginOutHandle
-              .bind(this)}
-              style="width:70vw;">
-              退出登录
-            </Button>
+            授权登录
+          </Button>
+}
+          {(4010 == code || 404 == code) && <Button
+            type="primary"
+            open-type="getUserInfo"
+            onGetUserInfo={this.getUserInfo}
+            style="width:70vw;">
+            一键登录
+          </Button>
+}
+          {(4011 == code || 4012 == code || 1 == code) && <Button
+            type="primary"
+            open-type="getUserInfo"
+            onGetUserInfo={this
+            .loginHandle
+            .bind(this)}
+            style="width:70vw;">
+            重新登录
+          </Button>
+}
+          {201 == code && <Button
+            onClick={this
+            .loginOutHandle
+            .bind(this)}
+            style="width:70vw;">
+            退出登录
+          </Button>
 }
         </View>
       </View>
@@ -181,13 +219,26 @@ any > {
   }
 
   private majorHandle() {
-    Taro.showToast({title: "Test选择专业"});
+    const {
+      category_name = "暂无",
+      major_name = "暂无"
+    } = this.state.info || {};
+    Taro.showToast({
+      title: "您的考试类型为 " + category_name + "，专业为 " + major_name + "；如需更改，请联系管理员。",
+      icon: "none"
+    });
   }
 
   private loginOutHandle() {
-    this.setState({showLoginBtn: true, info: null});
-    this.props.loginOut();
-   // 
+    this.setState({code: "1", info: null});
+    this
+      .props
+      .loginOut();
+
+  }
+  private loginHandle(data) {
+    let {encryptedData, iv} = data.detail;
+    getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
   }
 }
 

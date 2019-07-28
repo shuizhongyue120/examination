@@ -1,6 +1,6 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Button, Text } from '@tarojs/components'
+import {View, Button, Text} from '@tarojs/components'
 import {AtDivider, AtActivityIndicator} from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
@@ -8,9 +8,7 @@ import {connect} from '@tarojs/redux'
 import {fetchErrorBook} from '../../actions/error'
 
 import './index.css'
-//import "taro-ui/dist/weapp/css/index.css";
-
-// #region 书写注意
+//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -20,20 +18,20 @@ import './index.css'
 // #endregion
 
 type PageStateProps = {
-  book: {
+  error: {
     list: any[]
   }
 }
 
 type PageDispatchProps = {
-  fetchErrorBook: (id:string) => any
+  fetchErrorBook: (id : string) => any
 }
 
 type PageOwnProps = {}
 
 type PageState = {
   list?: any[];
-  loading?:boolean;
+  loading?: boolean;
 }
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -58,14 +56,14 @@ PageState > {
    * 提示和声明 navigationBarTextStyle: 'black' | 'white' 类型冲突, 需要显示声明类型
    */
   config : Config = {
-    navigationBarTitleText: '选择试题'
+    navigationBarTitleText: '选择错题集'
   }
 
   constructor(props, context) {
     super(props, context);
     this.state = {
       list: undefined,
-      loading:true
+      loading: true
     }
   }
 
@@ -73,24 +71,21 @@ PageState > {
     console.log(this.props, nextProps);
     let {
       list = []
-    } = nextProps.book;
-    if (!this.state.list&&list.length > 0) {
-      this.setState({list, loading:false});
+    } = nextProps.error;
+    if (!this.state.list && list.length > 0) {
+      this.setState({list, loading: false});
     }
 
   }
   componentDidMount() {
     let {id} = this.$router.params;
-    this.setState({loading:true});
+    this.setState({loading: true});
     this
       .props
       .fetchErrorBook(id);
   }
   componentWillUnmount() {
-    this.setState({
-      list:undefined,
-      loading:true
-    })
+    this.setState({list: undefined, loading: true})
   }
 
   componentDidShow() {}
@@ -100,31 +95,33 @@ PageState > {
   render() {
     let {id} = this.$router.params;
     let {
-      list = [],loading
+      list = [],
+      loading
     } = this.state;
 
     return (
       <View className='book'>
-        {loading&& <View style="text-align:center;margin-top:20PX;">
+        {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
-        <AtActivityIndicator  content='加载中...'></AtActivityIndicator>
-        </View></View>
-        }
+            <AtActivityIndicator content='加载中...'></AtActivityIndicator>
+          </View>
+        </View>
+}
         <View>
           {list.map(item => (
             <View key={id} class="paper_item">
-              <Text>{id}、{item.subject_category}</Text>
+              <Text>{id}、{item}</Text>
               <Button
-                data-category={item.subject_category}
+                data-category={item}
                 size="mini"
                 className='item_btn'
                 type='primary'
                 onClick={this.enterPaperHandle}>查看错题</Button>
             </View>
           ))
-        }
-        
-        {0 === list.length&& !loading&& <AtDivider content='请先参加模拟考试' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
+}
+
+          {0 === list.length && !loading && <AtDivider content='请先参加模拟考试' fontColor='#2d8cf0' lineColor='#2d8cf0'/>}
         </View>
       </View>
     )

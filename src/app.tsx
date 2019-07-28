@@ -104,7 +104,7 @@ class App extends Component {
       .then(res => {
         if (!res.authSetting['scope.userInfo']) { //未授权
           Taro.setStorageSync("loginover", "-1");
-          Taro.redirectTo({url: "pages/my/index"})
+          //Taro.redirectTo({url: "pages/my/index"})
         } else {
           if (checkLogin()) { //有token
             Taro.setStorageSync("loginover", "201");

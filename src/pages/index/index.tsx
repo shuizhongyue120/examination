@@ -15,7 +15,7 @@ import {goLogin, getLoginToken} from "../../function/user"
 import {sendRequest} from "../../function/api"
 
 import './index.css'
-//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
+
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -64,7 +64,7 @@ any > {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      showLoginBtn: false,
+      code: "0",
       info: undefined,
       isVerify: false,
       courses: undefined,
@@ -87,21 +87,7 @@ any > {
 
   componentWillReceiveProps(nextProps) {
     console.log(this.props, nextProps)
-    let {logined} = this.props.user;
     let {info, courses} = this.state;
-    let nextLogined = nextProps.user.logined;
-
-    if (!nextLogined) {
-      this.setState({showLoginBtn: true, info: undefined, isVerify: true, courses: undefined, course: ""});
-      return;
-    }
-    if (!logined && nextLogined) {
-      this.setState({showLoginBtn: false});
-      this
-        .props
-        .fetchInfo();
-      return;
-    }
 
     let nextinfo = nextProps.user.info;
     if (!info) {
@@ -110,6 +96,8 @@ any > {
         this
           .props
           .fetchCourses();
+      } else {
+        this.checkCode();
       }
       return;
     }
@@ -129,17 +117,34 @@ any > {
 
   pullHandle() {
     this.timer = setInterval(() => {
-      let loginover = Taro.getStorageSync("loginover");
-      if (loginover>=1) {
-        this
-          .props
-          .isLogin();
-        clearInterval(this.timer);
-      }
-      console.log("wait ", loginover);
+      this.checkCode();
     }, 50)
   }
 
+  private checkCode() {
+    let loginover = Taro.getStorageSync("loginover");
+    if (loginover == 201) {
+      this
+        .props
+        .fetchInfo();
+      clearInterval(this.timer);
+      this.setState({code: loginover});
+      return;
+    }
+    if (loginover < 0 || 4010 == loginover || 4011 == loginover || 4012 == loginover) { //未授权,未注册
+      clearInterval(this.timer);
+      this.setState({code: loginover});
+      Taro.switchTab({url: "../../pages/my/index"});
+      return;
+    }
+    if (loginover != 0) {
+      clearInterval(this.timer);
+      this.setState({code: loginover});
+      return;
+    }
+
+    console.log("wait ", loginover);
+  }
   componentWillUnmount() {
     clearInterval(this.timer);
   }
@@ -159,7 +164,7 @@ any > {
   }
 
   render() {
-    let {showLoginBtn, isVerify, url, method, param} = this.state;
+    let {code, isVerify, url, method, param} = this.state;
 
     let msg = this.getNoticeMsg();
     return (
@@ -193,16 +198,38 @@ any > {
           ? this.renderVerifyGroup()
           : this.renderNoVerifyGroup()}
 
-        {showLoginBtn && <View style="text-align:center;">
-          <Button
+        <View style="text-align:center;">
+          {-1 == code && <Button
             type="primary"
             size="mini"
             open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}>
-            点击登录
+            onGetUserInfo={this.getUserInfo}
+            style="width:165PX;">
+            授权登录
           </Button>
-        </View>
 }
+          {(4010 == code || 404 == code) && <Button
+            type="primary"
+            size="mini"
+            open-type="getUserInfo"
+            onGetUserInfo={this.getUserInfo}
+            style="width:165PX;">
+            一键登录
+          </Button>
+}
+          {(4011 == code || 1 == code) && <Button
+            type="primary"
+            size="mini"
+            open-type="getUserInfo"
+            onGetUserInfo={this
+            .loginHandle
+            .bind(this)}
+            style="width:165PX;">
+            重新登录
+          </Button>
+}
+        </View>
+
         <View style="text-align:center;">
           <Input
             type='text'
@@ -322,7 +349,10 @@ any > {
       getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
     });
   }
-
+  private loginHandle(data) {
+    let {encryptedData, iv} = data.detail;
+    getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+  }
   private enterExamHandle(e) {
     let idx = e.detail.value;
     let course = this.state.courses[idx];

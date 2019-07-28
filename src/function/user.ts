@@ -1,5 +1,5 @@
 import Taro, {Component, Config} from '@tarojs/taro'
-import {getLoginUrl, getTokenUrl, getInfoUrl} from "../constants";
+import {getLoginUrl, getTokenUrl, getInfoUrl, error401Msg2code} from "../constants";
 
 import {sendRequest} from "./api";
 
@@ -55,14 +55,12 @@ export const getLoginToken = (encryptedData, iv) => {
                 Taro.setStorageSync("account_id", data.data.account_id);
                 Taro.showToast({title: "登录成功！"});
             } else if (401 === data.statusCode) { //无效
-                //invalid_wxapp_code wxapp_not_registered
-                let code = "wxapp_not_registered" === data.data.error_code
-                    ? 4010
-                    : 4011;
+                let code = error401Msg2code[data.data.error_code];
                 Taro.setStorageSync("loginover", code);
             } else if (404 === data.statusCode) { //账号信息没有找到
                 //
             } else {
+                Taro.setStorageSync("loginover", 1);
                 Taro.showToast({title: "获取TOKEN异常"});
             }
         })
