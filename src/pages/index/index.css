@@ -1,6 +1,13 @@
 .btn_group{
     width:165PX;
-    margin: 10PX auto;
+    margin: 20PX auto;
+}
+.m_swiper image {
+    width: 100%;
+}
+.marjor_notice .at-noticebar{
+    background:#13ce66;
+    color:#fff;
 }
 
 .btn_item{

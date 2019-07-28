@@ -4,10 +4,11 @@ import {View, Button, Text, Image} from '@tarojs/components'
 import {AtList, AtListItem} from "taro-ui"
 import {connect} from '@tarojs/redux'
 
-import './index.css'
-import "taro-ui/dist/weapp/css/index.css";
+import {fetchInfo, isLogin, loginOut} from "../../actions/user"
+import {goLogin, getLoginToken} from "../../function/user"
 
-// #region 书写注意
+import './index.css'
+//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -16,19 +17,20 @@ import "taro-ui/dist/weapp/css/index.css";
 //
 // #endregion
 
-type PageStateProps = {}
-
-type PageDispatchProps = {}
-
-type PageOwnProps = {}
-
-type PageState = {
-  showLoginBtn?: boolean;
-  userInfo: {
-    nickName?: string,
-    avatarUrl?: string
+type PageStateProps = {
+  user: {
+    info: null,
+    logined: false
   }
 }
+type PageDispatchProps = {
+  fetchInfo: () => any;
+  loginOut:()=>any;
+  isLogin: () => any;
+}
+
+type PageOwnProps = {}
+type PageState = {}
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
 
@@ -36,18 +38,25 @@ interface Index {
   props : IProps;
 }
 
-@connect(({counter}) => ({counter}), (dispatch) => ({}))
+@connect(({user}) => ({user}), (dispatch) => ({
+  fetchInfo() {
+    dispatch(fetchInfo());
+  },
+  isLogin() {
+    dispatch(isLogin());
+  },
+  loginOut() {
+    dispatch(loginOut());
+  }
+}))
 class Index extends Component < IProps,
-PageState > {
-
+any > {
+  private timer = 0;
   constructor(props, context) {
     super(props, context);
     this.state = {
-      showLoginBtn: Taro.getStorageSync("userenable") !== "1",
-      userInfo: {
-        nickName: "",
-        avatarUrl: ""
-      }
+      showLoginBtn: !Taro.getStorageSync("access_token"),
+      info: null
     };
 
   }
@@ -65,77 +74,99 @@ PageState > {
 
   componentWillReceiveProps(nextProps) {
     console.log(this.props, nextProps)
-  }
-  componentDidMount() {
-    /*Taro
-      .getUserInfo()
-      .then(data => {
-        console.log("componentDidMount", data);
-        let {nickName, avatarUrl} = data.userInfo;
-        this.setState({
-          userInfo: {
-            nickName,
-            avatarUrl
-          }
+    let {logined, info} = this.props.user;
+    let nextLogined = nextProps.user.logined;
+    this.setState({
+      showLoginBtn: !nextLogined
+    });
+    if(!nextLogined){
+      this.setState({
+        showLoginBtn: true
+      });
+      return;
+    }
+    if (!logined && nextLogined && !info) {
+      this
+        .props
+        .fetchInfo();
+        return;
+    }
 
-        })
-      })*/
+    this.setState({info: nextProps.user.info});
+  }
+  componentDidMount() {}
+
+  pullHandle() {
+    this.timer = setInterval(() => {
+      if ("1" === Taro.getStorageSync("loginover")) {
+        this
+          .props
+          .isLogin();
+        clearInterval(this.timer);
+      }
+      console.log("3333");
+    }, 100)
   }
 
   componentWillUnmount() {}
 
-  componentDidShow() {}
+  componentDidShow() {
+    console.log(this.props);
+    let {
+      logined,
+      info = {}
+    } = this.props.user;
+    this.setState({
+      showLoginBtn: !logined,
+      info
+    });
+  }
 
   componentDidHide() {}
 
   render() {
-    let {showLoginBtn, userInfo} = this.state;
+    let {
+      showLoginBtn,
+      info = {}
+    } = this.state;
+    let major = "暂无";
+    if (info) {
+      info = info || {};
+      major = info.category_name + " ● " + info.major_name;
+    }
     return (
       <View className='index'>
         <View class="info_wrap" style="">
-          <Image src={userInfo.avatarUrl} class="avatar"></Image>
+          <Image src={info.avatar} class="avatar"></Image>
           <View style="margin-top:10px;">
-            <Text>{userInfo.nickName}</Text>
+            <Text>{info.nickname}</Text>
           </View>
         </View>
-        {showLoginBtn && <View style="text-align:center;">
-          <Button
-            type="primary"
-            size="mini"
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}>
-            点击授权
-          </Button>
-        </View>
-}
+
         <View class="list_wrap">
           <AtList>
             <AtListItem
-              title='专业选择'
+              title='专业'
+              note={major}
               arrow='right'
               onClick={this.majorHandle}
-              thumb='https://img12.360buyimg.com/jdphoto/s72x72_jfs/t6160/14/2008729947/2754/7d512a86/595c3aeeNa89ddf71.png'/>
-            <AtListItem
-              title='关于XX'
-              note='描述信息'
-              onClick={this.MoreHandle}
-              arrow='right'
-              thumb='http://img10.360buyimg.com/jdphoto/s72x72_jfs/t5872/209/5240187906/2872/8fa98cd/595c3b2aN4155b931.png'/>
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
           </AtList>
         </View>
-
-        <View>
-          <Button
-            type="primary"
-            size="mini"
-            open-type="getPhoneNumber"
-            onGetPhoneNumber={this.getPhoneNumber}>
-            获取手机号
-          </Button>
-        </View>
-
-        <View>
-          <Text>Hello, World</Text>
+        <View style="text-align:center;margin-top:20PX">
+          {showLoginBtn
+            ? <Button type="primary" open-type="getUserInfo" onGetUserInfo={this.getUserInfo}
+            style="width:70vw;">
+                登录
+              </Button>
+            : <Button
+              onClick={this
+              .loginOutHandle
+              .bind(this)}
+              style="width:70vw;">
+              退出登录
+            </Button>
+}
         </View>
       </View>
     )
@@ -143,17 +174,20 @@ PageState > {
 
   private getUserInfo(data) {
     console.log("getUserInfo", data);
+    let {encryptedData, iv} = data.detail;
+    goLogin(encryptedData, iv).then(res => {
+      getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    });
   }
+
   private majorHandle() {
     Taro.showToast({title: "Test选择专业"});
   }
 
-  private MoreHandle() {
-    Taro.showToast({title: "Test哈哈哈哈"});
-  }
-  private getPhoneNumber(data) {
-    console.log(data);
-    Taro.showToast({title: JSON.stringify(data)});
+  private loginOutHandle() {
+    this.setState({showLoginBtn: true, info: null});
+    this.props.loginOut();
+   // 
   }
 }
 

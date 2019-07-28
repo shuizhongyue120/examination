@@ -2,7 +2,7 @@
   "miniprogramRoot": "./dist",
   "projectname": "examin",
   "description": "考试",
-  "appid": "touristappid",
+  "appid": "wxebc181def55c04b9",
   "setting": {
     "urlCheck": true,
     "es6": false,

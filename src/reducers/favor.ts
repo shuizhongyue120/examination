@@ -1,10 +1,10 @@
-import {Fetch} from '../constants/book'
+import {Fetch, Unfavor} from '../constants/favor'
 
 const INITIAL_STATE = {
   list: null
 }
 
-export default function book(state = INITIAL_STATE, action) {
+export default function favor(state = INITIAL_STATE, action) {
   switch (action.type) {
     case Fetch:
       return {

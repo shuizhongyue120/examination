@@ -1,3 +1,5 @@
-const base_url = "http://kobejia.club:7778/";
 
-export let getLoginUrl = () => (base_url + "auth/accounts/wxapp");
+
+export let getLoginUrl = () => "auth/accounts/wxapp";
+export let getTokenUrl = () => "auth/oauth/token";
+export let getInfoUrl = () => "auth/accounts/self";
