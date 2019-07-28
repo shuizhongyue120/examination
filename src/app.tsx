@@ -25,7 +25,13 @@ class App extends Component {
    */
   config : Config = {
     pages: [
-      'pages/index/index', "pages/book/index", "pages/paper/index", "pages/favor/index", 'pages/my/index'
+      'pages/index/index',
+      "pages/book/index",
+      "pages/paper/index",
+      "pages/favor/index",
+      'pages/my/index',
+      'pages/errorbook/index',
+      'pages/error/index'
     ],
     window: {
       backgroundTextStyle: 'light',
@@ -36,7 +42,7 @@ class App extends Component {
     },
     tabBar: {
       backgroundColor: "#fefefe",
-      selectedColor:"#2747DE",
+      selectedColor: "#2747DE",
       list: [
         {
           text: "首页",
@@ -47,18 +53,14 @@ class App extends Component {
           text: "我的",
           pagePath: "pages/my/index",
           iconPath: "static/icon/user.png",
-          
+
           selectedIconPath: "static/icon/user_act.png"
         }
       ]
     }
   }
-
-  componentDidMount() {
-    //this.loginAndRegister();
-  }
-
   componentDidShow() {
+    console.log("show app show ");
     this.loginAndRegister();
   }
 
@@ -80,9 +82,7 @@ class App extends Component {
       .getUserInfo()
       .then(user => {
         let {encryptedData, iv} = user;
-        getLoginToken(encryptedData, iv).then(()=>{
-          Taro.setStorageSync("loginover","1");
-        });
+        getLoginToken(encryptedData, iv).then(() => {});
       })
   }
 
@@ -98,20 +98,18 @@ class App extends Component {
   }
 
   private loginAndRegister() {
-    Taro.setStorageSync("loginover","0");
+    Taro.setStorageSync("loginover", "0");
     Taro
       .getSetting({})
       .then(res => {
-        if (!res.authSetting['scope.userInfo']) {
-          Taro.setStorageSync("loginover","1");
-          //未授权
+        if (!res.authSetting['scope.userInfo']) { //未授权
+          Taro.setStorageSync("loginover", "-1");
+          Taro.redirectTo({url: "pages/my/index"})
         } else {
-
-          if (checkLogin()) {
-            Taro.setStorageSync("loginover","1");
-           // this.tokenHandle();
-          } else {
-            this.loginAndTokenHandle();
+          if (checkLogin()) { //有token
+            Taro.setStorageSync("loginover", "201");
+          } else { // 没有token
+            this.tokenHandle();
           }
         }
 

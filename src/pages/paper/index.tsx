@@ -109,7 +109,7 @@ PageState > {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      list: [],
+      list: undefined,
       cur: undefined,
       anwser: "",
       animation: undefined,
@@ -125,7 +125,7 @@ PageState > {
     let {
       list = []
     } = nextProps.paper;
-    if (!this.props.paper.list&&list) {
+    if (!this.state.list&&list) {
       this.setState({list, cur: list[0]});
     }
 
@@ -163,7 +163,18 @@ PageState > {
         })
       }, 1000);
   }
-  componentWillUnmount() {}
+  componentWillUnmount() {
+    this.setState({
+      list: undefined,
+      cur: undefined,
+      anwser: "",
+      animation: undefined,
+      showCata:false, //是否展示题目目录
+      isOpenResPan:false,//是否展示考试结果pan
+      isOver: false, //是否考完了
+      leftSecond: 3600
+    });
+  }
 
   componentDidShow() {}
 
@@ -180,12 +191,7 @@ PageState > {
       isOpenResPan, 
       leftSecond=3600
     } = this.state;
-
     let count = list.length;
-
-    if (0===count) {
-      return;
-    }
 
     let answer = JSON.parse(cur.subject_answer || "{}");
     let keys = Object
@@ -202,8 +208,9 @@ PageState > {
     }
     
     let isChoice = cur.subject_type === "choice";
-
+    console.log("animation", animation);
     return (
+      <View>
       <ScrollView>
         <View
           class="question_main"
@@ -248,8 +255,8 @@ PageState > {
             </View>
           })}
         </View>
-
-        <View>
+      </ScrollView>
+      <View>
           {!isOver?<AtTabBar
             tabList={tabBar}
             onClick={this
@@ -272,7 +279,7 @@ PageState > {
         {(isOver && isOpenResPan)
           ? this.renderAnswerPan()
           : ""}
-      </ScrollView>
+      </View>
     )
   }
 
@@ -395,7 +402,6 @@ PageState > {
     });
   }
   touchStartHandle(e) {
-    console.log("start", e.changedTouches[0].pageX);
     this.startPosition = {
       x: e.changedTouches[0].pageX,
       y: e.changedTouches[0].pageY
@@ -404,20 +410,21 @@ PageState > {
 
   touchMoveHandle(e) {
     this.moveFlag = true;
-    console.log("move", e.target);
   }
   touchEndHandle(e) {
     if (!this.moveFlag) {
       return;
     }
 
-    console.log("end", e.changedTouches[0].pageX - this.startPosition.x);
-    let x = e.changedTouches[0].pageX;
+    let {pageX, pageY} = e.changedTouches[0];
+    let {x,y} = this.startPosition;
+    let lenY = Math.abs(pageY- y);
+    let lenX = Math.abs(pageX- x)
     let diff = 0;
-    if (x - this.startPosition.x >= 40) {
+    if (lenX >= 50 && lenY<30) {
       diff = -1;
     }
-    if (x - this.startPosition.x <= -40) {
+    if (lenX <= -50 && lenY<30) {
       diff = 1;
     }
     let {

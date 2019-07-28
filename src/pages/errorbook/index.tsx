@@ -5,7 +5,7 @@ import {AtDivider, AtActivityIndicator} from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
 
-import {fetchBooks} from '../../actions/book'
+import {fetchErrorBook} from '../../actions/error'
 
 import './index.css'
 //import "taro-ui/dist/weapp/css/index.css";
@@ -26,7 +26,7 @@ type PageStateProps = {
 }
 
 type PageDispatchProps = {
-  fetchBooks: (id:string) => any
+  fetchErrorBook: (id:string) => any
 }
 
 type PageOwnProps = {}
@@ -42,9 +42,9 @@ interface Index {
   props : IProps;
 }
 
-@connect(({book}) => ({book}), (dispatch) => ({
-  fetchBooks(id) {
-    dispatch(fetchBooks(id))
+@connect(({error}) => ({error}), (dispatch) => ({
+  fetchErrorBook(id) {
+    dispatch(fetchErrorBook(id))
   }
 }))
 class Index extends Component < IProps,
@@ -84,7 +84,7 @@ PageState > {
     this.setState({loading:true});
     this
       .props
-      .fetchBooks(id);
+      .fetchErrorBook(id);
   }
   componentWillUnmount() {
     this.setState({
@@ -119,12 +119,12 @@ PageState > {
                 size="mini"
                 className='item_btn'
                 type='primary'
-                onClick={this.enterPaperHandle}>开始答题</Button>
+                onClick={this.enterPaperHandle}>查看错题</Button>
             </View>
           ))
         }
         
-        {0 === list.length&& !loading&& <AtDivider content='没有题目可选，请重新选择课程' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
+        {0 === list.length&& !loading&& <AtDivider content='请先参加模拟考试' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
         </View>
       </View>
     )
@@ -135,7 +135,7 @@ PageState > {
     let {id} = this.$router.params;
     let category = e.target.dataset.category;
     Taro.navigateTo({
-      url: "../paper/index?id=" + id + "&category=" + category
+      url: "../error/index?id=" + id + "&category=" + category
     });
   }
 }

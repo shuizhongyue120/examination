@@ -15,8 +15,7 @@ import {goLogin, getLoginToken} from "../../function/user"
 import {sendRequest} from "../../function/api"
 
 import './index.css'
-//import "taro-ui/dist/weapp/css/index.css";
-// #region 书写注意
+//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -66,7 +65,8 @@ any > {
     super(props, context);
     this.state = {
       showLoginBtn: false,
-      info: null,
+      info: undefined,
+      isVerify: false,
       courses: undefined,
       course: "",
       url: "",
@@ -90,41 +90,54 @@ any > {
     let {logined} = this.props.user;
     let {info, courses} = this.state;
     let nextLogined = nextProps.user.logined;
-    this.setState({
-      showLoginBtn: !nextLogined
-    });
+
+    if (!nextLogined) {
+      this.setState({showLoginBtn: true, info: undefined, isVerify: true, courses: undefined, course: ""});
+      return;
+    }
     if (!logined && nextLogined) {
+      this.setState({showLoginBtn: false});
       this
         .props
         .fetchInfo();
-      this
-        .props
-        .fetchCourses();
+      return;
     }
 
-    if (nextLogined && !info && nextProps.user.info) {
-      this.setState({info: nextProps.user.info});
+    let nextinfo = nextProps.user.info;
+    if (!info) {
+      this.setState({info: nextinfo});
+      if (nextinfo) {
+        this
+          .props
+          .fetchCourses();
+      }
+      return;
     }
 
-    if (nextLogined && !courses && nextProps.user.courses) {
-      this.setState({courses: nextProps.user.courses});
+    let nextcourses = nextProps.user.courses;
+    if (!courses) {
+      this.setState({
+        courses: nextcourses,
+        isVerify: !!nextcourses
+      });
     }
-
   }
   componentDidMount() {
+    console.log("index did mount");
     this.pullHandle();
   }
 
   pullHandle() {
     this.timer = setInterval(() => {
-      if ("1" === Taro.getStorageSync("loginover")) {
+      let loginover = Taro.getStorageSync("loginover");
+      if (loginover>=1) {
         this
           .props
           .isLogin();
         clearInterval(this.timer);
       }
-      console.log("3333");
-    }, 100)
+      console.log("wait ", loginover);
+    }, 50)
   }
 
   componentWillUnmount() {
@@ -146,19 +159,11 @@ any > {
   }
 
   render() {
-    let {
-      showLoginBtn,
-      courses = [],
-      course,
-      url,
-      method,
-      param
-    } = this.state;
+    let {showLoginBtn, isVerify, url, method, param} = this.state;
 
     let msg = this.getNoticeMsg();
     return (
       <View className='index'>
-
         <Swiper
           className='m_swiper'
           indicatorColor='#999'
@@ -184,28 +189,9 @@ any > {
         {msg && <View class="marjor_notice">
           <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
         </View>}
-        <View class="btn_group">
-          <Picker
-            class="btn_item"
-            style="background-color: #409eff;"
-            value={course}
-            mode='selector'
-            range={courses.map(item => item.course_name)}
-            onChange={this
-            .enterExamHandle
-            .bind(this)}>模拟考试</Picker>
-          <Picker class="btn_item" style="background-color: #5daf34;">真题解析</Picker>
-          <View class="btn_item" style="background-color: #e6a23c;">错题集</View>
-          <Picker
-            class="btn_item"
-            value={course}
-            mode='selector'
-            range={courses.map(item => item.course_name)}
-            onChange={this
-            .enterFavorHandle
-            .bind(this)}
-            style="background-color: #07c160;">收藏</Picker>
-        </View>
+        {isVerify
+          ? this.renderVerifyGroup()
+          : this.renderNoVerifyGroup()}
 
         {showLoginBtn && <View style="text-align:center;">
           <Button
@@ -258,9 +244,80 @@ any > {
     );
 
   }
+
+  private renderNoVerifyGroup() {
+    return <View class="btn_group">
+      <View
+        class="btn_item"
+        style="background-color: #409eff;"
+        onClick={this.noVerifyHandle}>模拟考试</View>
+      <View
+        class="btn_item"
+        style="background-color: #5daf34;"
+        onClick={this.noVerifyHandle}>真题解析</View>
+      <View
+        class="btn_item"
+        style="background-color: #e6a23c;"
+        onClick={this.noVerifyHandle}>错题集</View>
+      <View
+        class="btn_item"
+        style="background-color: #07c160;"
+        onClick={this.noVerifyHandle}>收藏</View>
+    </View>
+  }
+  private noVerifyHandle() {
+    Taro.showToast({title: "您还未通过审核，请联系管理员。", icon: "none"});
+  }
+  private renderVerifyGroup() {
+    let {
+      courses = [],
+      course
+    } = this.state;
+
+    return <View class="btn_group">
+      <Picker
+        class="btn_item"
+        style="background-color: #409eff;"
+        value={course}
+        mode='selector'
+        range={courses.map(item => item.course_name)}
+        onChange={this
+        .enterExamHandle
+        .bind(this)}>模拟考试</Picker>
+      <Picker
+        class="btn_item"
+        style="background-color: #5daf34;"
+        value={course}
+        mode='selector'
+        range={courses.map(item => item.course_name)}
+        onChange={this
+        .enterExamHandle
+        .bind(this)}>真题解析</Picker>
+      <Picker
+        class="btn_item"
+        style="background-color: #e6a23c;"
+        value={course}
+        mode='selector'
+        range={courses.map(item => item.course_name)}
+        onChange={this
+        .enterErrorHandle
+        .bind(this)}>错题集</Picker>
+      <Picker
+        class="btn_item"
+        value={course}
+        mode='selector'
+        range={courses.map(item => item.course_name)}
+        onChange={this
+        .enterFavorHandle
+        .bind(this)}
+        style="background-color: #07c160;">收藏</Picker>
+    </View>
+  }
+
   private getUserInfo(data) {
     console.log("getUserInfo", data);
     let {encryptedData, iv} = data.detail;
+    //重新走一遍注册登录
     goLogin(encryptedData, iv).then(res => {
       getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
     });
@@ -276,13 +333,24 @@ any > {
     }
   }
 
-  private enterFavorHandle(e){
+  private enterFavorHandle(e) {
     let idx = e.detail.value;
     let course = this.state.courses[idx];
     console.log("enterFavorHandle", course);
     if (course) {
       Taro.navigateTo({
         url: "../favor/index?name=" + course.course_name
+      });
+    }
+  }
+
+  private enterErrorHandle(e) {
+    let idx = e.detail.value;
+    let course = this.state.courses[idx];
+    console.log("enterFavorHandle", course);
+    if (course) {
+      Taro.navigateTo({
+        url: "../errorbook/index?id=" + course.course_id
       });
     }
   }

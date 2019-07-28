@@ -1,0 +1,16 @@
+.paper_item{
+    height: 30PX;
+    line-height: 30PX;
+    padding: 10PX 20PX;
+    border-bottom: 1PX solid #dbdbdb;
+}
+.item_btn{
+    vertical-align:middle;
+    float:right;
+}
+.book {
+    padding: 5px 10PX;
+}
+.book .at-divider__content{
+    background-color: #f5f5f5;
+}

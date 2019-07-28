@@ -24,6 +24,10 @@ export const submitPaper = (course_id, subject_category, submits) => {
     return sendRequest("POST", "v1/self/course/" + course_id + "/exam", {subject_category, submits});
 }
 
+export const fetchErrorList = (course_id) => {
+    return sendRequest("GET", "v1/self/course/" + course_id + "/exam/error", null);
+}
+
 export const fetchPaperResults = (course_id, exam_id, subject_category) => {
     return sendRequest("GET", "v1/self/course/" + course_id + "/exam", {subject_category, exam_id});
 }

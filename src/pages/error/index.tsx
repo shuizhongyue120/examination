@@ -4,8 +4,7 @@ import {View, Button, Text, Progress} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 
-import {fetch} from '../../actions/favor'
-//import {IQuestionItem} from "../../constants/favor"
+import {fetch} from '../../actions/error'
 
 import './index.css'
 
@@ -19,13 +18,13 @@ import './index.css'
 // #endregion
 
 type PageStateProps = {
-  favor: {
+  error: {
     list: any[]
   }
 }
 
 type PageDispatchProps = {
-  fetch: () => any
+  fetch: (id) => any
 }
 
 type PageOwnProps = {}
@@ -44,9 +43,9 @@ interface Index {
   props : IProps;
 }
 
-@connect(({favor}) => ({favor}), (dispatch) => ({
-  fetch() {
-    dispatch(fetch())
+@connect(({error}) => ({error}), (dispatch) => ({
+  fetch(id) {
+    dispatch(fetch(id))
   }
 }))
 class Index extends Component < IProps,
@@ -78,7 +77,7 @@ PageState > {
     console.log(this.props, nextProps);
     let {
       list = []
-    } = nextProps.favor;
+    } = nextProps.error;
     if (!this.state.list&& list) {
       let data = list.find(item => item.course_name === name);
       if (data) {
@@ -92,10 +91,11 @@ PageState > {
 
   }
   componentDidMount() {
-    this.setState({loading:true})
+    this.setState({loading:true});
+    let {id} = this.$router.params;
     this
       .props
-      .fetch();
+      .fetch(id);
   }
   componentWillUnmount() {}
 
@@ -149,7 +149,7 @@ PageState > {
           </View>
         </View>
         }
-        {0 === list.length&& !loading&& <AtDivider content='收藏题目为空' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
+        {0 === list.length&& !loading&& <AtDivider content='暂无' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
       </View>
     )
 
@@ -176,8 +176,6 @@ PageState > {
       });
     }, 300);
   }
-
-  bookMarkHandle() {}
 }
 
 // #region 导出注意

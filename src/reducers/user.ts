@@ -1,8 +1,8 @@
-import {Login, UserInfo, Courses} from '../constants/user'
+import {Login, UserInfo, Courses, LoginOut} from '../constants/user'
 
 const INITIAL_STATE = {
   logined: false,
-  info: null,
+  info: undefined,
   courses: undefined
 }
 
@@ -22,6 +22,12 @@ export default function user(state = INITIAL_STATE, action) {
       return {
         ...state,
         info: action.payload
+      }
+    case LoginOut:
+      return {
+        ...state,
+        logined: false,
+        info:null
       }
     default:
       return state

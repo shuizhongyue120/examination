@@ -4,13 +4,11 @@ import {View, Button, Text, Image} from '@tarojs/components'
 import {AtList, AtListItem} from "taro-ui"
 import {connect} from '@tarojs/redux'
 
-import {fetchInfo, isLogin} from "../../actions/user"
+import {fetchInfo, isLogin, loginOut} from "../../actions/user"
 import {goLogin, getLoginToken} from "../../function/user"
 
 import './index.css'
-//import "taro-ui/dist/weapp/css/index.css";
-
-// #region 书写注意
+//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -26,7 +24,8 @@ type PageStateProps = {
   }
 }
 type PageDispatchProps = {
-  fetchInfo: () => any,
+  fetchInfo: () => any;
+  loginOut:()=>any;
   isLogin: () => any;
 }
 
@@ -45,6 +44,9 @@ interface Index {
   },
   isLogin() {
     dispatch(isLogin());
+  },
+  loginOut() {
+    dispatch(loginOut());
   }
 }))
 class Index extends Component < IProps,
@@ -77,20 +79,22 @@ any > {
     this.setState({
       showLoginBtn: !nextLogined
     });
-    if (!logined && nextLogined) {
+    if(!nextLogined){
+      this.setState({
+        showLoginBtn: true
+      });
+      return;
+    }
+    if (!logined && nextLogined && !info) {
       this
         .props
         .fetchInfo();
+        return;
     }
 
-    if (nextLogined && !info && nextProps.user.info) {
-      this.setState({info});
-    }
-
+    this.setState({info: nextProps.user.info});
   }
-  componentDidMount() {
-   
-  }
+  componentDidMount() {}
 
   pullHandle() {
     this.timer = setInterval(() => {
@@ -108,18 +112,25 @@ any > {
 
   componentDidShow() {
     console.log(this.props);
-    let {logined, info={}} = this.props.user;
+    let {
+      logined,
+      info = {}
+    } = this.props.user;
     this.setState({
-      showLoginBtn: !logined,info
+      showLoginBtn: !logined,
+      info
     });
   }
 
   componentDidHide() {}
 
   render() {
-    let {showLoginBtn, info={}} = this.state;
-    let major="暂无s";
-    if(info){
+    let {
+      showLoginBtn,
+      info = {}
+    } = this.state;
+    let major = "暂无";
+    if (info) {
       info = info || {};
       major = info.category_name + " ● " + info.major_name;
     }
@@ -131,16 +142,7 @@ any > {
             <Text>{info.nickname}</Text>
           </View>
         </View>
-        {showLoginBtn && <View style="text-align:center;">
-          <Button
-            type="primary"
-            size="mini"
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}>
-            点击授权
-          </Button>
-        </View>
-}
+
         <View class="list_wrap">
           <AtList>
             <AtListItem
@@ -148,14 +150,23 @@ any > {
               note={major}
               arrow='right'
               onClick={this.majorHandle}
-              thumb='https://img12.360buyimg.com/jdphoto/s72x72_jfs/t6160/14/2008729947/2754/7d512a86/595c3aeeNa89ddf71.png'/>
-            <AtListItem
-              title='说明'
-              note='描述信息xxxxxxxxxx'
-              onClick={this.MoreHandle}
-              arrow='right'
-              thumb='http://img10.360buyimg.com/jdphoto/s72x72_jfs/t5872/209/5240187906/2872/8fa98cd/595c3b2aN4155b931.png'/>
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
           </AtList>
+        </View>
+        <View style="text-align:center;margin-top:20PX">
+          {showLoginBtn
+            ? <Button type="primary" open-type="getUserInfo" onGetUserInfo={this.getUserInfo}
+            style="width:70vw;">
+                登录
+              </Button>
+            : <Button
+              onClick={this
+              .loginOutHandle
+              .bind(this)}
+              style="width:70vw;">
+              退出登录
+            </Button>
+}
         </View>
       </View>
     )
@@ -168,12 +179,15 @@ any > {
       getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
     });
   }
+
   private majorHandle() {
     Taro.showToast({title: "Test选择专业"});
   }
 
-  private MoreHandle() {
-    Taro.showToast({title: "Test哈哈哈哈"});
+  private loginOutHandle() {
+    this.setState({showLoginBtn: true, info: null});
+    this.props.loginOut();
+   // 
   }
 }
 
