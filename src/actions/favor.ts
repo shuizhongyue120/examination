@@ -1,4 +1,5 @@
-import {Fetch, Unfavor} from '../constants/favor'
+import Taro from '@tarojs/taro'
+import {Fetch} from '../constants/favor'
 
 import {favorList} from "../function/api"
 
@@ -11,14 +12,5 @@ export function fetch() {
     }) => {
       dispatch({type: Fetch, payload: data})
     })
-  }
-}
-
-// 异步的action
-export function unfavor(id) {
-  return dispatch => {
-    setTimeout(() => {
-      dispatch({type: Unfavor, payload: id})
-    }, 300);
   }
 }

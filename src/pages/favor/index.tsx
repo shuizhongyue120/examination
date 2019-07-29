@@ -1,11 +1,11 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Button, Text, Progress} from '@tarojs/components'
+import {View, Text, ScrollView} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 
 import {fetch} from '../../actions/favor'
-//import {IQuestionItem} from "../../constants/favor"
+import {favorPaper} from "../../function/api"
 
 import './index.css'
 
@@ -34,9 +34,21 @@ type PageState = {
   course_name?: string;
   list?: any[];
   cur?: any;
-  anwser?: string;
   loading?:boolean;
+  animation?: any[];
+  showCata?:boolean;
 }
+
+//查看答案解析
+const overTabBar = [
+  {
+    title: '收藏',
+    iconType: 'star'
+  }, {
+    title: '0/0',
+    iconType: 'bookmark'
+  }
+];
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
 
@@ -63,19 +75,25 @@ PageState > {
     navigationBarTitleText: '收藏'
   }
 
+  private startPosition = {
+    x: -1,
+    y: -1
+  };
+  private moveFlag = false;
+
   constructor(props, context) {
     super(props, context);
     this.state = {
       list: undefined,
       cur: undefined,
       course_name: "",
-      loading:true
+      loading:true,
+      showCata:false//是否展示题目目录
     }
   }
 
   componentWillReceiveProps(nextProps) {
     let {name} = this.$router.params;
-    console.log(this.props, nextProps);
     let {
       list = []
     } = nextProps.favor;
@@ -83,6 +101,9 @@ PageState > {
       let data = list.find(item => item.course_name === name);
       if (data) {
         let {subjects, course_name} = data;
+        subjects.forEach(item => {
+          item.is_favorite = 1;
+        }); 
         this.setState({list: subjects, course_name, cur: subjects[0], loading:false});
       }else {
         this.setState({list: [], loading:false});
@@ -107,77 +128,232 @@ PageState > {
     let {
       list = [],
       cur = {},
-      anwser = "",loading
+      animation,
+      showCata =false,
+      loading
     } = this.state;
-
-
-    let answer = JSON.parse(cur.subject_answer || "{}");
-    let keys = Object
-      .keys(answer)
-      .sort();
-    let choosesRadios = keys.map(item => ({label: answer[item], value: item}))
+      let count = list.length;
+    let idx = list.findIndex(item => cur.subject_id === item.subject_id);
+    overTabBar[1].title = (idx + 1) + "/" + count;
     let isChoice = cur.subject_type === "choice";
+    
     return (
       <View className='favor'>
-      {loading&& <View style="text-align:center;margin-top:20PX;">
+        {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
-        <AtActivityIndicator  content='加载中...'></AtActivityIndicator>
-        </View></View>
-        }
-        {0<list.length&& !loading&&<View class="question_wrap">
-          <View>
-            <AtTag type='primary' active={true} size="small" circle>{isChoice
-                ? "单选"
-                : "简答"}</AtTag>
-            <Text style="margin-left:10px;">{cur.subject_name}（{cur.subject_grade}分）</Text>
-          </View>
-          {isChoice
-            ? <View class="choose_wrap">
-                <AtRadio options={choosesRadios} value={cur.subject_right_answer}/>
-              </View>
-            : ""}
-          <View class="answer_wrap">
-            <View class="answer_title">
-              <Text>题目解析：</Text>
-            </View>
-            <View>
-              <Text>正确答案是 <Text style="font-weight: 800;">{cur.subject_right_answer}</Text></Text>
-            </View>
-            <View>
-              <Text>{cur.subject_tips}</Text>
-            </View>
+            <AtActivityIndicator content='加载中...'></AtActivityIndicator>
           </View>
         </View>
-        }
-        {0 === list.length&& !loading&& <AtDivider content='收藏题目为空' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
+}
+        {0 < list.length && !loading && <ScrollView>
+          <View
+            class="question_main"
+            animation={animation}
+            onTouchstart={this
+            .touchStartHandle
+            .bind(this)}
+            onTouchmove={this
+            .touchMoveHandle
+            .bind(this)}
+            onTouchend={this
+            .touchEndHandle
+            .bind(this)}
+            style={"width:" + count * 100 + "vw;"}>
+            {list.map((item)=> {
+              let answers = JSON.parse(item.subject_answer || "{}");
+              let keys = Object
+                .keys(answers)
+                .sort();
+              let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+              return <View class="question_wrap" key={"qus_" + item.subject_id}>
+                <View>
+                  <AtTag type='primary' active={true} size="small" circle>{isChoice
+                      ? "单选"
+                      : "简答"}</AtTag>
+                  <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                </View>
+                <View class="choose_wrap">
+                  <AtRadio options={choosesRadios} value={item.subject_right_answer}/>
+                </View>
+                <View class="question_answer_wrap">
+                  <View class="answer_title">
+                    <Text>题目解析：</Text>
+                  </View>
+                  <View class="answer_desc">
+                    <Text>
+                    正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                    </Text>
+                  </View>
+                  <View>
+                    <Text>{item.subject_tips}</Text>
+                  </View>
+                </View>
+              </View>
+            })}
+          </View>
+        </ScrollView>
+}
+        {0 === list.length && !loading && <AtDivider content='暂无' fontColor='#2d8cf0' lineColor='#2d8cf0'/>}
+        <View>
+          <AtTabBar
+            tabList={overTabBar}
+            onClick={this
+            .handleOverTabBarClick
+            .bind(this)}
+            current={1 === cur.is_favorite
+            ? 0
+            : 1}
+            fixed={true}/>
+        </View>
+        {showCata && this.renderCataPan()}
       </View>
     )
 
   }
-  handleChange(value) {
-    console.log(value);
+//答题索引目录
+private renderCataPan(){
+  let {list = [], cur ={}} = this.state;
+ return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}><View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
+     list.map(item => {
+       let cls = (item.subject_id||1) === (cur.subject_id||1)
+         ? "right"
+         : "";
+       return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
+         <Text>{item.subject_id}</Text>
+       </View>
+     })
+   } </View>
+ </View>
+ </View>
+}
+  //跳转到指定题目
+  private jumpHandle(e){
+    let {
+      list = []
+    } = this.state;
+    let sid = e.currentTarget.dataset.sid;
+    let idx = list.findIndex(item=>item.subject_id === sid);
+    this.setState({
+      cur: Object.assign({}, list[idx]),
+      animation: this.getAnimate(idx),
+      showCata:false
+    });
+  }
+  touchStartHandle(e) {
+    this.startPosition = {
+      x: e.changedTouches[0].pageX,
+      y: e.changedTouches[0].pageY
+    };
+  }
+
+  touchMoveHandle(e) {
+    this.moveFlag = true;
+  }
+  touchEndHandle(e) {
+    if (!this.moveFlag) {
+      return;
+    }
+
+    let {pageX, pageY} = e.changedTouches[0];
+    let {x, y} = this.startPosition;
+    let lenY = Math.abs(pageY - y);
+    let lenX = pageX - x;
+    let diff = 0;
+    if (lenX >= 50) {
+      diff = -1;
+    }
+    if (lenX <= -50) {
+      diff = 1;
+    }
+    if (lenY > 30) {
+      return;
+    }
     let {
       list = [],
       cur = {}
     } = this.state;
-    let idx = 0;
-    list = list.map((item, index) => {
-      if (cur.subject_id === item.subject_id) {
-        item.subject_my_answer = value;
-        idx = index;
-      }
-      return item;
+    let idx = list.findIndex(item => item.subject_id === cur.subject_id);
+    let isLast = idx === list.length - 1;
+    let isFirst = idx === 0;
+    this.startPosition = {
+      x: -1,
+      y: -1
+    };
+    let nextIdx = idx + 1 * diff;
+    if (isFirst && -1 === diff) {
+      this.moveFlag = false;
+      Taro.showToast({title: "已经是第一个了"});
+      return;
+    }
+    if (isLast && 1 === diff) {
+      this.moveFlag = false;
+      Taro.showToast({title: "已经是最后一个了"});
+      return;
+    }
+    this.setState({
+      cur: Object.assign({}, list[nextIdx]),
+      animation: this.getAnimate(nextIdx)
     });
 
-    this.setState({list, anwser: value});
     setTimeout(() => {
-      this.setState({
-        cur: Object.assign({}, list[idx])
-      });
-    }, 300);
+      this.moveFlag = false;
+    }, 450);
+
+  }
+  private hideCataPan(e){
+    if("cata"===e.target.dataset.cid){
+     return;
+    }
+    this.setState({showCata:false});
   }
 
-  bookMarkHandle() {}
+  getAnimate(idx) {
+    let animation = Taro.createAnimation({duration: 400, timingFunction: 'ease', delay: 0})
+    animation
+      .translateX(-100 * idx + "vw")
+      .step();
+    return animation.export();
+  }
+
+  handleOverTabBarClick(value : number){
+    if(0===value){
+      this.favorHandle();
+    }else if(1 === value){
+      this.setState({showCata:true});
+    }
+  }
+  favorHandle() {
+    let {
+      list = [],
+      cur = {}
+    } = this.state;
+    let action = 1 === cur.is_favorite
+      ? 0
+      : 1;
+    favorPaper(cur.course_id, cur.subject_id, action).then(data => {
+      list = list.map((item) => {
+        if (cur.subject_id === item.subject_id) {
+          item.is_favorite = action;
+          cur.is_favorite = action;
+        }
+        return item;
+      });
+
+      this.setState({list,cur});
+      Taro.showToast({
+        title: action
+          ? "收藏成功"
+          : "取消收藏成功"
+      });
+    }).catch(() => {
+      Taro.showToast({
+        title: action
+          ? "收藏失败"
+          : "取消收藏失败",
+        icon: "none"
+      });
+    })
+  }
 }
 
 // #region 导出注意

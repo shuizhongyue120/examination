@@ -1,6 +1,5 @@
 export const Fetch = 'FETCHSUBS'
 export const Submit = 'SUBMITSUBS'
-export const Favor = 'FAVORSUB'
 
 export interface IQuestionItem {
     subject_id?: number;

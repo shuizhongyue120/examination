@@ -1,3 +1,4 @@
+import Taro from '@tarojs/taro'
 import {Fetch} from '../constants/book'
 import {fetchCategory} from '../function/api'
 
@@ -11,6 +12,9 @@ export function fetchBooks(id) {
       dispatch({
         type: Fetch, payload: data
       })
+    }).catch((res)=>{
+      Taro.setStorageSync("loginover", 1);
+     Taro.showToast({title:"请求异常，" + res.errMsg});
     })
   }
 }

@@ -52,6 +52,7 @@ interface Index {
 class Index extends Component < IProps,
 any > {
   private timer = 0;
+  private ts = 0;
   private codeTxt = {
     "0": "empty",
     "-1": "授权登录",
@@ -84,12 +85,14 @@ any > {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps)
-    let {info} = this.props.user;
     let nextInfo = nextProps.user.info;
-    if (!info && nextInfo) {
+    if (nextInfo) {
+      this.ts = new Date().getTime();
       this.setState({info: nextProps.user.info});
       return;
+    } else {
+      this.setState({info: undefined, code: 0});
+      this.pullHandle();
     }
 
   }
@@ -111,8 +114,6 @@ any > {
         this.setState({code: loginover, info: undefined});
         return;
       }
-
-      console.log("wait ", loginover);
     }, 50)
   }
   componentWillUnmount() {
@@ -120,7 +121,7 @@ any > {
   }
 
   componentDidShow() {
-    this.pullHandle();
+    this.pullHandle(); 
   }
 
   componentDidHide() {}
@@ -134,6 +135,7 @@ any > {
     let {
       category_name = "暂无",
       major_name = "暂无",
+      nickname = "未知",
       avatar
     } = info;
     let major = category_name + " ● " + major_name;
@@ -141,10 +143,10 @@ any > {
       "c08d0764e6b1e93598f3860ee8fddb4&t=1564321663";
     return (
       <View className='index'>
-        <View class="info_wrap" style="">
+        <View class="info_wrap">
           <Image src={avatar} class="avatar"></Image>
           <View style="margin-top:10px;">
-            <Text>{info.nickname || "无"}</Text>
+            <Text>{nickname}</Text>
           </View>
         </View>
 
@@ -211,7 +213,6 @@ any > {
   }
 
   private getUserInfo(data) {
-    console.log("getUserInfo", data);
     let {encryptedData, iv} = data.detail;
     goLogin(encryptedData, iv).then(res => {
       getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));

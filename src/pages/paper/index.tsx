@@ -1,7 +1,7 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config, Animation} from '@tarojs/taro'
 import {View, Button, Text, Progress, ScrollView} from '@tarojs/components'
-import {AtTabBar, AtRadio, AtTag} from 'taro-ui'
+import {AtTabBar, AtRadio, AtTag, AtActivityIndicator} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 
 import {fetch, submit} from '../../actions/paper'
@@ -41,6 +41,7 @@ type PageState = {
   isOver?: boolean;
   isOpenResPan?:boolean;
   showCata?:boolean;
+  loading?:boolean;
   leftSecond?:number;
 }
 
@@ -111,6 +112,7 @@ PageState > {
     this.state = {
       list: undefined,
       cur: undefined,
+      loading:true,
       animation: undefined,
       showCata:false, //是否展示题目目录
       isOpenResPan:false,//是否展示考试结果pan
@@ -120,12 +122,11 @@ PageState > {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps);
     let {
       list = []
     } = nextProps.paper;
     if (!this.state.list&&list) {
-      this.setState({list, cur: list[0]});
+      this.setState({list, cur: list[0], loading:false});
     }
 
   }
@@ -133,7 +134,7 @@ PageState > {
     let {id, category} = this.$router.params;
     this.course_id = id;
     this.category = category;
-
+    this.setState({loading:true});
     this
       .props
       .fetch(id, category);
@@ -186,6 +187,7 @@ PageState > {
       showCata =false,
       isOver,
       isOpenResPan, 
+      loading,
       leftSecond=3600
     } = this.state;
     let count = list.length;
@@ -198,10 +200,16 @@ PageState > {
     }
     
     let isChoice = cur.subject_type === "choice";
-    console.log("animation", animation);
+
     return (
       <View>
-      <ScrollView>
+         {loading && <View style="text-align:center;margin-top:20PX;">
+          <View style="display:inline-block;">
+            <AtActivityIndicator content='加载中...'></AtActivityIndicator>
+          </View>
+        </View>
+}
+      {!loading &&<ScrollView>
         <View
           class="question_main"
           animation={animation}
@@ -239,8 +247,21 @@ PageState > {
                 <View class="answer_title">
                   <Text>题目解析：</Text>
                 </View>
-                <View>
-                  <Text>正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text></Text>
+                <View class="answer_desc">
+                  {item.subject_my_answer==="" &&<Text>你未作答，答案是
+                      <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                    </Text>
+                  }
+                  {item.subject_my_answer===item.subject_right_answer &&<Text>
+                    <Text style="font-weight: 800;color: #07c160;">回答正确</Text>
+                    ，答案是  <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                    </Text>
+                  }
+                  {(item.subject_my_answer&&item.subject_my_answer!==item.subject_right_answer) && <Text>你的答案是 {item.subject_my_answer}，
+                  <Text style="font-weight: 800;color: #FF6B01">回答错误</Text>
+                  ；正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                  </Text>
+                  }
                 </View>
                 <View>
                   <Text>{item.subject_tips}</Text>
@@ -250,7 +271,7 @@ PageState > {
             </View>
           })}
         </View>
-      </ScrollView>
+      </ScrollView>}
       <View>
           {!isOver?<AtTabBar
             tabList={tabBar}
@@ -281,9 +302,10 @@ PageState > {
 //答题索引目录
  private renderCataPan(){
    let {list = [], cur ={}} = this.state;
-  return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}><View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
+  return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}>
+  <View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
       list.map(item => {
-        let cls = (item.subject_id||1) <= (cur.subject_id||1)
+        let cls = (item.subject_my_answer)
           ? "right"
           : "";
         return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
@@ -344,7 +366,7 @@ PageState > {
       </View>
       {choiceList.length > 0 &&< View class="answer_title"> 单选题 </View>}
       {choiceList.length > 0 &&
-        <ScrollView scroll-y={true} class = "answer_list" > {
+        <View class = "answer_list"> {
           choiceList.map(item => {
             let cls = item.subject_right_answer === item.subject_my_answer
               ? "right"
@@ -353,7 +375,7 @@ PageState > {
               <Text>{item.subject_id}</Text>
             </View>
           })
-        } </ScrollView>
+        } </View>
       }
       {textList.length > 0 &&< View class="answer_title"> 简答题 </View>}
       {textList.length > 0 &&<View class="answer_list">
@@ -377,7 +399,7 @@ PageState > {
     let {
       list = []
     } = this.state;
-    let sid = e.target.dataset.sid;
+    let sid = e.currentTarget.dataset.sid;
     let idx = list.findIndex(item=>item.subject_id === sid);
     this.setState({
       isOpenResPan:false,
@@ -462,7 +484,6 @@ PageState > {
 
   }
   handleChange(value) {
-    console.log(value);
     let {
       list = [],
       cur = {}
@@ -508,16 +529,25 @@ PageState > {
     return animation.export();
   }
   handleOverTabBarClick(value : number){
-    if(0===value){
+    let {loading
+    } = this.state;
+    if(loading){
+      return;
+    }
 
-    }else if(1 === value){
+    if(0===value){
       this.favorHandle();
+    }else if(1 === value){
+      this.setState({showCata:true});
     }
   }
   handleTabBarClick(value : number) {
     let {
-      list = []
+      list = [],loading
     } = this.state;
+    if(loading){
+      return;
+    }
     if (3 === value) {
       Taro.showModal({
         title: "提示",

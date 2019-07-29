@@ -19,11 +19,6 @@ export const goLogin = (encryptedData, iv) => {
     return Taro
         .login()
         .then(({code}) => {
-            console.log("login", {
-                code,
-                username: encryptedData,
-                password: iv
-            });
             return sendRequest("POST", getLoginUrl(), {
                 code,
                 username: encryptedData,
@@ -36,11 +31,6 @@ export const getLoginToken = (encryptedData, iv) => {
     return Taro
         .login()
         .then(({code}) => {
-            console.log("token", {
-                code,
-                username: encryptedData,
-                password: iv
-            });
             return sendRequest("POST", getTokenUrl(), {
                 code,
                 username: encryptedData,
@@ -48,7 +38,6 @@ export const getLoginToken = (encryptedData, iv) => {
             })
         })
         .then(data => {
-            console.log("token", data);
             Taro.setStorageSync("loginover", data.statusCode);
             if (201 === data.statusCode) {
                 Taro.setStorageSync("access_token", data.data.access_token);
@@ -65,7 +54,6 @@ export const getLoginToken = (encryptedData, iv) => {
             }
         })
         .catch((res = {}) => {
-            console.log("getLoginToken", res);
             Taro.showToast({
                 title: res.errMsg || ""
             });

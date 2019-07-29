@@ -70,7 +70,6 @@ PageState > {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps);
     let {
       list = []
     } = nextProps.book;

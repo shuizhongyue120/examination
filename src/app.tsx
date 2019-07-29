@@ -60,8 +60,7 @@ class App extends Component {
     }
   }
   componentDidShow() {
-    console.log("show app show ");
-    this.loginAndRegister();
+    this.checkUser();
   }
 
   componentDidHide() {}
@@ -97,7 +96,7 @@ class App extends Component {
       })
   }
 
-  private loginAndRegister() {
+  private checkUser() {
     Taro.setStorageSync("loginover", "0");
     Taro
       .getSetting({})
@@ -115,6 +114,7 @@ class App extends Component {
 
       })
       .catch(data => {
+        Taro.setStorageSync("loginover", "-1");
         console.log("getSetting error", data);
       })
   }

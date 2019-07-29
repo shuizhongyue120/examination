@@ -86,10 +86,14 @@ any > {
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log(this.props, nextProps)
     let {info, courses} = this.state;
 
     let nextinfo = nextProps.user.info;
+    if (info && !nextinfo) {
+      this.setState({info: undefined});
+      this.checkCode();
+      return;
+    }
     if (!info) {
       this.setState({info: nextinfo});
       if (nextinfo) {
@@ -106,12 +110,12 @@ any > {
     if (!courses) {
       this.setState({
         courses: nextcourses,
+        code: 0,
         isVerify: !!nextcourses
       });
     }
   }
   componentDidMount() {
-    console.log("index did mount");
     this.pullHandle();
   }
 
@@ -143,7 +147,6 @@ any > {
       return;
     }
 
-    console.log("wait ", loginover);
   }
   componentWillUnmount() {
     clearInterval(this.timer);
@@ -230,7 +233,7 @@ any > {
 }
         </View>
 
-        <View style="text-align:center;">
+       {/*  <View style="text-align:center;">
           <Input
             type='text'
             placeholder='接口名称，如auth/accounts/self'
@@ -246,7 +249,7 @@ any > {
             onChange={this
             .onMethodHandle
             .bind(this)}
-            style="border:1px solid #dbdbdb;width:90%;margin:10PX 0; height:32px; "/>
+            style="border:1px solid #dbdbdb;width:90%;margin:2PX 0; height:32px; "/>
           <Input
             type='text'
             placeholder="参数，如name:1,job:ccc"
@@ -264,7 +267,7 @@ any > {
             .bind(this)}>
             调试接口
           </Button>
-        </View>
+        </View> */}
 
         {/* <View class="adv_wrap">广告位</View> */}
       </View>
@@ -318,7 +321,7 @@ any > {
         mode='selector'
         range={courses.map(item => item.course_name)}
         onChange={this
-        .enterExamHandle
+        .enterAnalysisHandle
         .bind(this)}>真题解析</Picker>
       <Picker
         class="btn_item"
@@ -342,7 +345,6 @@ any > {
   }
 
   private getUserInfo(data) {
-    console.log("getUserInfo", data);
     let {encryptedData, iv} = data.detail;
     //重新走一遍注册登录
     goLogin(encryptedData, iv).then(res => {
@@ -363,10 +365,13 @@ any > {
     }
   }
 
+  private enterAnalysisHandle(e) {
+   Taro.showToast({title:"敬请期待。"});
+  }
+
   private enterFavorHandle(e) {
     let idx = e.detail.value;
     let course = this.state.courses[idx];
-    console.log("enterFavorHandle", course);
     if (course) {
       Taro.navigateTo({
         url: "../favor/index?name=" + course.course_name
@@ -377,7 +382,6 @@ any > {
   private enterErrorHandle(e) {
     let idx = e.detail.value;
     let course = this.state.courses[idx];
-    console.log("enterFavorHandle", course);
     if (course) {
       Taro.navigateTo({
         url: "../errorbook/index?id=" + course.course_id
@@ -386,15 +390,12 @@ any > {
   }
 
   private onUrlHandle(e) {
-    console.log(e.detail.value);
     this.setState({url: e.detail.value});
   }
   private onMethodHandle(e) {
-    console.log(e.detail.value);
     this.setState({method: e.detail.value});
   }
   private onParamHanle(e) {
-    console.log(e.detail.value);
     this.setState({param: e.detail.value});
   }
 
@@ -410,9 +411,8 @@ any > {
       let list = element.split(/：|:/);
       obj[list[0]] = list[1];
     });
-    console.log(obj);
+
     sendRequest(method, "http://kobejia.club:7778/" + url, obj).then(data => {
-      console.log(data);
     });
   }
 }

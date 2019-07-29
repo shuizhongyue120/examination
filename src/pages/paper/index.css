@@ -45,10 +45,11 @@ page{
     top: 0px;
     left: 0px;
     background-color: #fff;
+    overflow-y: scroll;
 }
 .answer_grade .grade{
     height: 160PX;
-    padding-top: 130px;
+    padding-top: 80PX;
     background: #13ce66;
     color: #fff;
 }
@@ -80,17 +81,18 @@ page{
 
 .answer_item, .cata_item{
     display: inline-block;
-    height: 30PX;
-    width: 30PX;
+    height: 36PX;
+    width: 36PX;
     border-radius: 50%;
     border: 1PX solid #dbdbdb;
     text-align: center;
-    vertical-align: middle;
-    margin: 5PX;
+    margin: 6PX;
 }
 
 .answer_item>text, .cata_item>text {
     vertical-align: middle;
+    margin-bottom: -8PX;
+    display: inline-block;
 }
 .answer_item.right, .cata_item.right{
     background-color: #13ce66;
@@ -106,6 +108,9 @@ page{
 .answer_title {
     padding: 10PX 20PX;
     font-weight:800;
+}
+.answer_desc {
+    padding: 0 20PX;
 }
 
 .answer_list,.cata+list{
@@ -133,7 +138,8 @@ page{
     bottom:0;
     left:0;
     width: 100%;
-    height: 50vh;
+    height: 70vh;
     background: #fff;
     text-align: center;
+    overflow-y: scroll;
 }

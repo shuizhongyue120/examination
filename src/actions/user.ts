@@ -10,7 +10,7 @@ export const login = (list) => {
 // 异步的action
 export function loginOut() {
   return dispatch => {
-    Taro.setStorageSync("loginover", "");
+    Taro.setStorageSync("loginover", "1");
     Taro.setStorageSync("access_token", "");
     Taro.setStorageSync("account_id", "");
     dispatch({type: LoginOut})
@@ -43,7 +43,11 @@ export function fetchInfo() {
         Taro.showToast({title: "读取用户信息失败，请重试。"})
       }
 
-    })
+    }).catch((res)=>{
+      Taro.setStorageSync("loginover", 1);
+      dispatch({type: UserInfo, payload: undefined});
+      Taro.showToast({title:"请求异常，" + res.errMsg});
+     })
   }
 }
 
@@ -66,6 +70,9 @@ export function fetchCourses() {
         dispatch({type: Courses, payload: undefined});
         Taro.showToast({title: "读取课程失败，请重试。"})
       }
-    })
+    }).catch((res)=>{
+      Taro.setStorageSync("loginover", 1);
+      Taro.showToast({title:"请求异常，" + res.errMsg});
+     })
   }
 }

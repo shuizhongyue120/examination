@@ -1,3 +1,4 @@
+import Taro from '@tarojs/taro'
 import {Fetch, FetchErrorBook} from '../constants/error'
 
 import {fetchErrorList} from "../function/api"
@@ -10,7 +11,10 @@ export function fetch(id) {
       data = null
     }) => {
       dispatch({type: Fetch, payload: data})
-    })
+    }).catch((res)=>{
+      Taro.setStorageSync("loginover", 1);
+      Taro.showToast({title:"请求异常，" + res.errMsg});
+     })
   }
 }
 
@@ -21,7 +25,10 @@ export function fetchErrorBook(id) {
       data = []
     }) => {
       dispatch({type: FetchErrorBook, payload: data.map(item=>item.subject_category)})
-    })
+    }).catch((res)=>{
+      Taro.setStorageSync("loginover", 1);
+      Taro.showToast({title:"请求异常，" + res.errMsg});
+     })
   }
 }
 
