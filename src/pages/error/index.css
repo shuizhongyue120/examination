@@ -142,3 +142,6 @@ page{
     text-align: center;
     overflow-y: scroll;
 }
+.error .at-divider__content{
+    background-color: #f5f5f5;
+}

@@ -1,7 +1,7 @@
 .info_wrap{
     padding: 40PX 20PX;
     text-align: center;
-    background-color: #5daf34;
+    background-color: #6190e8;
     color: #ffffff;
 }
 .avatar{
@@ -11,3 +11,10 @@
     margin:0 auto;
     display:block;
 }
+.my button{
+    border: 0;
+    border-radius:0;
+    color: #6190e8;
+    background: #ffffff;
+}
+.my button::after{ border: none; }

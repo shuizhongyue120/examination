@@ -6,7 +6,9 @@ import {
   SwiperItem,
   Button,
   Input,
-  Picker
+  Picker,
+  Text,
+  Image
 } from '@tarojs/components'
 import {AtNoticebar} from 'taro-ui'
 import {connect} from '@tarojs/redux'
@@ -23,6 +25,13 @@ import './index.css'
 // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20796
 //
 // #endregion
+
+const ImgsUrl : string[] = [
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%80%83%E8%AF%95%20(2).png?sign=9254dd2e2b96a3263be951ff24d0c80d&t=1564666435",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%A7%A3%E6%9E%90.png?sign=cde98fd9e91d5257487aa4e773e4bb27&t=1564666461",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E9%94%99%E9%A2%98.png?sign=b802940961f3859fa244c9ee27df5d2f&t=1564666709",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E6%94%B6%E8%97%8F.png?sign=f86f810f1a1b4d121c02b2a6258097f0&t=1564666522"
+];
 
 type PageStateProps = {
   user: {
@@ -107,13 +116,11 @@ any > {
     }
 
     let nextcourses = nextProps.user.courses;
-    if (!courses) {
-      this.setState({
-        courses: nextcourses,
-        code: 0,
-        isVerify: !!nextcourses
-      });
-    }
+    this.setState({
+      courses: nextcourses,
+      code: 0,
+      isVerify: !!nextcourses
+    });
   }
   componentDidMount() {
     this.pullHandle();
@@ -143,7 +150,7 @@ any > {
     }
     if (loginover != 0) {
       clearInterval(this.timer);
-      this.setState({code: loginover});
+      this.setState({code: loginover, course: undefined, info: undefined});
       return;
     }
 
@@ -197,7 +204,7 @@ any > {
         {msg && <View class="marjor_notice">
           <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
         </View>}
-        {isVerify
+        {(isVerify && 0 == code)
           ? this.renderVerifyGroup()
           : this.renderNoVerifyGroup()}
 
@@ -233,7 +240,7 @@ any > {
 }
         </View>
 
-       {/*  <View style="text-align:center;">
+        {/*  <View style="text-align:center;">
           <Input
             type='text'
             placeholder='接口名称，如auth/accounts/self'
@@ -276,27 +283,52 @@ any > {
   }
 
   private renderNoVerifyGroup() {
-    return <View class="btn_group">
-      <View
-        class="btn_item"
-        style="background-color: #409eff;"
-        onClick={this.noVerifyHandle}>模拟考试</View>
-      <View
-        class="btn_item"
-        style="background-color: #5daf34;"
-        onClick={this.noVerifyHandle}>真题解析</View>
-      <View
-        class="btn_item"
-        style="background-color: #e6a23c;"
-        onClick={this.noVerifyHandle}>错题集</View>
-      <View
-        class="btn_item"
-        style="background-color: #07c160;"
-        onClick={this.noVerifyHandle}>收藏</View>
+    return <View class="btn_groups">
+      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[0]}/>
+        </View>
+        <Text>模拟考试</Text>
+      </View>
+      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[1]}/>
+        </View>
+        <Text>真题解析</Text>
+      </View>
+
+      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[2]}/>
+        </View>
+        <Text>错题集</Text>
+      </View>
+      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[3]}/>
+        </View>
+        <Text>收藏</Text>
+      </View>
     </View>
   }
   private noVerifyHandle() {
-    Taro.showToast({title: "您还未通过审核，请联系管理员。", icon: "none"});
+    let {
+      courses = [],
+      code,
+      isVerify
+    } = this.state;
+    if (0 != code) {
+      Taro.showToast({title: "未注册或登录失败，暂时无法使用该功能。", icon: "none"});
+      return;
+    }
+
+    if (!isVerify) {
+      Taro.showToast({title: "您还未通过审核，请联系管理员。", icon: "none"});
+    }
+    if (0 === courses.length) {
+      Taro.showToast({title: "暂无课程，请联系管理员。", icon: "none"});
+      return;
+    }
   }
   private renderVerifyGroup() {
     let {
@@ -366,7 +398,7 @@ any > {
   }
 
   private enterAnalysisHandle(e) {
-   Taro.showToast({title:"敬请期待。"});
+    Taro.showToast({title: "敬请期待。"});
   }
 
   private enterFavorHandle(e) {
@@ -412,7 +444,6 @@ any > {
       obj[list[0]] = list[1];
     });
 
-    sendRequest(method, "http://kobejia.club:7778/" + url, obj).then(data => {
-    });
+    sendRequest(method, "http://kobejia.club:7778/" + url, obj).then(data => {});
   }
 }

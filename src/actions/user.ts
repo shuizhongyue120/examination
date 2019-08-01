@@ -40,14 +40,17 @@ export function fetchInfo() {
       } else {
         Taro.setStorageSync("loginover", 1);
         dispatch({type: UserInfo, payload: undefined});
-        Taro.showToast({title: "读取用户信息失败，请重试。"})
+        Taro.showToast({title: "读取用户信息失败，请重试。", icon: "none"});
       }
 
-    }).catch((res)=>{
+    }).catch((res) => {
       Taro.setStorageSync("loginover", 1);
       dispatch({type: UserInfo, payload: undefined});
-      Taro.showToast({title:"请求异常，" + res.errMsg});
-     })
+      Taro.showToast({
+        title: "请求异常，" + res.errMsg,
+        icon: "none"
+      });
+    })
   }
 }
 
@@ -68,11 +71,14 @@ export function fetchCourses() {
       } else {
         Taro.setStorageSync("loginover", 1);
         dispatch({type: Courses, payload: undefined});
-        Taro.showToast({title: "读取课程失败，请重试。"})
+        Taro.showToast({title: "读取课程失败，请重试。", icon: "none"});
       }
-    }).catch((res)=>{
+    }).catch((res) => {
       Taro.setStorageSync("loginover", 1);
-      Taro.showToast({title:"请求异常，" + res.errMsg});
-     })
+      Taro.showToast({
+        title: "请求异常，" + res.errMsg,
+        icon: "none"
+      });
+    })
   }
 }

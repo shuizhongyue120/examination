@@ -202,7 +202,7 @@ PageState > {
     let isChoice = cur.subject_type === "choice";
 
     return (
-      <View>
+      <View class="paper">
          {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
             <AtActivityIndicator content='加载中...'></AtActivityIndicator>
@@ -248,7 +248,7 @@ PageState > {
                   <Text>题目解析：</Text>
                 </View>
                 <View class="answer_desc">
-                  {item.subject_my_answer==="" &&<Text>你未作答，答案是
+                  {!item.subject_my_answer &&<Text>你未作答，答案是
                       <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
                     </Text>
                   }

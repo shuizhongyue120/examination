@@ -50,12 +50,13 @@ export const getLoginToken = (encryptedData, iv) => {
                 //
             } else {
                 Taro.setStorageSync("loginover", 1);
-                Taro.showToast({title: "获取TOKEN异常"});
+                Taro.showToast({title: "获取TOKEN异常", icon: "none"});
             }
         })
         .catch((res = {}) => {
             Taro.showToast({
-                title: res.errMsg || ""
+                title: res.errMsg || "",
+                icon: "none"
             });
         });
 }

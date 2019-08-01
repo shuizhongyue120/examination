@@ -142,3 +142,7 @@ page{
     text-align: center;
     overflow-y: scroll;
 }
+
+.favor .at-divider__content{
+    background-color: #f5f5f5;
+}

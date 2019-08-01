@@ -136,7 +136,7 @@ PageState > {
     let isChoice = cur.subject_type === "choice";
     
     return (
-      <View className='favor'>
+      <View className='error'>
         {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
             <AtActivityIndicator content='加载中...'></AtActivityIndicator>

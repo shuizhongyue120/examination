@@ -142,7 +142,7 @@ any > {
     avatar = avatar || "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/default.jpeg?sign=3" +
       "c08d0764e6b1e93598f3860ee8fddb4&t=1564321663";
     return (
-      <View className='index'>
+      <View className='my'>
         <View class="info_wrap">
           <Image src={avatar} class="avatar"></Image>
           <View style="margin-top:10px;">
@@ -159,12 +159,12 @@ any > {
               onClick={this
               .majorHandle
               .bind(this)}
-              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/hat.png?sign=34148c0757a14b6c284fd5c9f53a8607&t=1564648458'/>
             <AtListItem
-              title='待补充1'
+              title='说明'
               note={"待完善....."}
               arrow='right'
-              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
+              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/desc.png?sign=e4d582d2e39738cac1660eaf9e5e33f8&t=1564650091'/>
             <AtListItem
               title='待补充2'
               note={"待完善....."}
@@ -174,36 +174,29 @@ any > {
         </View>
         <View style="text-align:center;margin-top:20PX">
           {-1 == code && <Button
-            type="primary"
             open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}
-            style="width:70vw;">
+            onGetUserInfo={this.getUserInfo}>
             授权登录
           </Button>
 }
           {(4010 == code || 404 == code) && <Button
-            type="primary"
             open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}
-            style="width:70vw;">
+            onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }
           {(4011 == code || 4012 == code || 1 == code) && <Button
-            type="primary"
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
-            .bind(this)}
-            style="width:70vw;">
+            .bind(this)}>
             重新登录
           </Button>
 }
           {201 == code && <Button
             onClick={this
             .loginOutHandle
-            .bind(this)}
-            style="width:70vw;">
+            .bind(this)}>
             退出登录
           </Button>
 }

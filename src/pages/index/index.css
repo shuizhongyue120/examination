@@ -30,3 +30,19 @@
     width: 100%;
     background-color: blueviolet;
 }
+.btn_groups{
+    padding: 20PX;
+    text-align: center;
+}
+.btn_wrap{
+    display:inline-block;
+    padding: 20PX;
+}
+.btn_wrap text{
+    padding: 5PX;
+}
+.btn_img{
+    width: 70PX;
+    height: 70PX;
+    margin: 0 auto;
+}

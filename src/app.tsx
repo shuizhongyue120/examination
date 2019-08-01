@@ -42,7 +42,8 @@ class App extends Component {
     },
     tabBar: {
       backgroundColor: "#fefefe",
-      selectedColor: "#2747DE",
+      selectedColor: "#6190e8",
+      borderStyle:"white",
       list: [
         {
           text: "首页",
