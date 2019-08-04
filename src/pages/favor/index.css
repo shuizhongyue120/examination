@@ -15,7 +15,7 @@ page{
     height:100vh;
     width: 100vw;
     box-sizing:border-box;
-    padding: 20PX 10PX;
+    padding: 20PX;
 }
 
 .question_wrap .at-tag{
@@ -29,8 +29,7 @@ page{
 }
 
 .choose_wrap{
-    padding: 20PX 20PX;
-    margin-top: 20PX;
+    margin: 30PX 0 30PX 20PX;
 }
 .at-radio__icon .at-icon {
     font-weight:800;
@@ -89,9 +88,9 @@ page{
 }
 
 .answer_item>text, .cata_item>text {
-    vertical-align: middle;
-    margin-bottom: -8PX;
     display: inline-block;
+    height: 36PX;
+    line-height: 36PX;
 }
 .answer_item.right, .cata_item.right{
     background-color: #13ce66;
@@ -105,7 +104,7 @@ page{
     color: #fff;
 }
 .answer_title {
-    padding: 10PX 20PX;
+    padding: 10PX 0;
     font-weight:800;
 }
 .answer_desc {
@@ -145,4 +144,32 @@ page{
 
 .favor .at-divider__content{
     background-color: #f5f5f5;
+}
+
+.kcheckbox_item{
+    display: flex;
+    flex-direction: row;
+    padding: 10PX 0;
+}
+.kcheckbox_item_icon{
+    display: inline-block;
+    height: 25PX;
+    width: 25PX;
+    padding-right: 15PX;
+    background-repeat: no-repeat;
+    background-image: url(https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/%E6%9C%AA%E9%80%89%E4%B8%AD.png?sign=bac26e620ba7fccd1ce4a21ab3d1e2b2&t=1564889426);
+    background-size: 25PX;
+}
+
+.kcheckbox_item_icon.right {
+    background-image: url(https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/%E5%90%8C%E6%84%8F.png?sign=82ae123b03e11cdc8edd5026280b40a3&t=1564890190);
+}
+
+.kcheckbox_item_icon.wrong {
+    background-image: url(https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/%E9%A9%B3%E5%9B%9E.png?sign=05862c18771162f084e2654d23a229e5&t=1564890227);
+}
+
+.kcheckbox_item_text{
+    display: inline-block;
+    vertical-align: super;
 }

@@ -15,7 +15,6 @@ import {connect} from '@tarojs/redux'
 import {fetchInfo, isLogin, fetchCourses} from "../../actions/user"
 import {goLogin, getLoginToken} from "../../function/user"
 import {sendRequest} from "../../function/api"
-
 import './index.css'
 
 //
@@ -27,10 +26,14 @@ import './index.css'
 // #endregion
 
 const ImgsUrl : string[] = [
-  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%80%83%E8%AF%95%20(2).png?sign=9254dd2e2b96a3263be951ff24d0c80d&t=1564666435",
-  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%A7%A3%E6%9E%90.png?sign=cde98fd9e91d5257487aa4e773e4bb27&t=1564666461",
-  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E9%94%99%E9%A2%98.png?sign=b802940961f3859fa244c9ee27df5d2f&t=1564666709",
-  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E6%94%B6%E8%97%8F.png?sign=f86f810f1a1b4d121c02b2a6258097f0&t=1564666522"
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%80%83%E8" +
+      "%AF%95%20(2).png?sign=9254dd2e2b96a3263be951ff24d0c80d&t=1564666435",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%A7%A3%E6" +
+      "%9E%90%20(1).png?sign=f4606e3223d85060628b01089394080a&t=1564667851",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E9%94%99%E9" +
+      "%A2%98%20(1).png?sign=d4535be0d89f73a9fbe97647da9c04f1&t=1564667885",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E6%94%B6%E8" +
+      "%97%8F.png?sign=f86f810f1a1b4d121c02b2a6258097f0&t=1564666522"
 ];
 
 type PageStateProps = {
@@ -95,7 +98,7 @@ any > {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {info, courses} = this.state;
+    let {info} = this.state;
 
     let nextinfo = nextProps.user.info;
     if (info && !nextinfo) {
@@ -209,32 +212,19 @@ any > {
           : this.renderNoVerifyGroup()}
 
         <View style="text-align:center;">
-          {-1 == code && <Button
-            type="primary"
-            size="mini"
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}
-            style="width:165PX;">
+          {-1 == code && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             授权登录
           </Button>
 }
-          {(4010 == code || 404 == code) && <Button
-            type="primary"
-            size="mini"
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}
-            style="width:165PX;">
+          {(4010 == code || 404 == code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }
           {(4011 == code || 1 == code) && <Button
-            type="primary"
-            size="mini"
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
-            .bind(this)}
-            style="width:165PX;">
+            .bind(this)}>
             重新登录
           </Button>
 }
@@ -307,7 +297,7 @@ any > {
         <View>
           <Image class="btn_img" src={ImgsUrl[3]}/>
         </View>
-        <Text>收藏</Text>
+        <Text>收藏夹</Text>
       </View>
     </View>
   }
@@ -336,43 +326,61 @@ any > {
       course
     } = this.state;
 
-    return <View class="btn_group">
+    return <View class="btn_groups">
       <Picker
-        class="btn_item"
-        style="background-color: #409eff;"
+        class="btn_wrap"
         value={course}
+        data-idx="0"
         mode='selector'
         range={courses.map(item => item.course_name)}
         onChange={this
         .enterExamHandle
-        .bind(this)}>模拟考试</Picker>
+        .bind(this)}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[0]}/>
+        </View>
+        <Text>模拟考试</Text>
+      </Picker>
       <Picker
-        class="btn_item"
-        style="background-color: #5daf34;"
+        class="btn_wrap"
         value={course}
+        data-idx="1"
         mode='selector'
         range={courses.map(item => item.course_name)}
         onChange={this
-        .enterAnalysisHandle
-        .bind(this)}>真题解析</Picker>
+        .enterExamHandle
+        .bind(this)}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[1]}/>
+        </View>
+        <Text>真题解析</Text>
+      </Picker>
       <Picker
-        class="btn_item"
-        style="background-color: #e6a23c;"
+        class="btn_wrap"
         value={course}
         mode='selector'
         range={courses.map(item => item.course_name)}
         onChange={this
         .enterErrorHandle
-        .bind(this)}>错题集</Picker>
+        .bind(this)}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[2]}/>
+        </View>
+        <Text>错题集</Text>
+      </Picker>
       <Picker
-        class="btn_item"
+        class="btn_wrap"
         value={course}
         mode='selector'
         range={courses.map(item => item.course_name)}
         onChange={this
         .enterFavorHandle
-        .bind(this)}
-        style="background-color: #07c160;">收藏</Picker>
+        .bind(this)}>
+        <View>
+          <Image class="btn_img" src={ImgsUrl[3]}/>
+        </View>
+        <Text>收藏夹</Text>
+      </Picker>
     </View>
   }
 
@@ -388,17 +396,15 @@ any > {
     getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
   }
   private enterExamHandle(e) {
-    let idx = e.detail.value;
-    let course = this.state.courses[idx];
+    let id = e.detail.value;
+    let course = this.state.courses[id];
+    let idx = e.currentTarget.dataset.idx;
+   
     if (course) {
       Taro.navigateTo({
-        url: "../book/index?id=" + course.course_id
+        url: "../book/index?type="+ idx + "&id=" + course.course_id
       });
     }
-  }
-
-  private enterAnalysisHandle(e) {
-    Taro.showToast({title: "敬请期待。"});
   }
 
   private enterFavorHandle(e) {

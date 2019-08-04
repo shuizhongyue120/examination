@@ -1,5 +1,5 @@
 .info_wrap{
-    padding: 40PX 20PX;
+    padding: 50PX 20PX;
     text-align: center;
     background-color: #6190e8;
     color: #ffffff;
@@ -11,6 +11,7 @@
     margin:0 auto;
     display:block;
 }
+
 .my button{
     border: 0;
     border-radius:0;

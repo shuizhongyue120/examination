@@ -171,20 +171,38 @@ PageState > {
                   <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
                 </View>
                 <View class="choose_wrap">
-                  <AtRadio options={choosesRadios} value={item.subject_right_answer}/>
+                {choosesRadios.map(j=>{
+                const {exam_answer, subject_right_answer} = item;
+                let cls="";
+                  if(subject_right_answer === j.value){
+                    cls="right";
+                  }
+                  //回答正确 并且 答案和标识（A,B,CD） 匹配
+                  if( exam_answer===subject_right_answer && exam_answer === j.value){
+                    cls="right";
+                  }
+                  //回答错误 并且 答案和标识（A,B,CD） 匹配
+                  if(exam_answer&& exam_answer!==subject_right_answer &&exam_answer === j.value){
+                    cls="wrong";
+                  }
+                       
+                 return (<View class="kcheckbox_item" data-val={j.value}>
+                 <View class={"kcheckbox_item_icon "+ cls }/>
+                 <Text class="kcheckbox_item_text">{j.label}</Text>
+               </View>);
+              })}
                 </View>
                 <View class="question_answer_wrap">
                   <View class="answer_title">
-                    <Text>题目解析：</Text>
+                    <Text>题目解析</Text>
                   </View>
                   <View class="answer_desc">
-                  {item.exam_answer==="" &&<Text>你未作答，答案是
-                      <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                  {item.exam_answer==="" &&<Text>你未作答，答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
                     </Text>
                   }
                   {item.exam_answer===item.subject_right_answer &&<Text>
                     <Text style="font-weight: 800;color: #07c160;">回答正确</Text>
-                    ，答案是  <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                    ，答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
                     </Text>
                   }
                   {(item.exam_answer&&item.exam_answer!==item.subject_right_answer) && <Text>你的答案是 {item.exam_answer}，

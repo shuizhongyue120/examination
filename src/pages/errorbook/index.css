@@ -4,9 +4,11 @@
     padding: 10PX 20PX;
     border-bottom: 1PX solid #dbdbdb;
 }
+
 .item_btn{
-    vertical-align:middle;
     float:right;
+    color: #f5f5f5;
+    background-color: #6190e8;
 }
 .book {
     padding: 5px 10PX;
@@ -14,3 +16,4 @@
 .book .at-divider__content{
     background-color: #f5f5f5;
 }
+button::after{ border: none; }

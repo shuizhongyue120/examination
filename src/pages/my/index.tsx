@@ -81,15 +81,16 @@ any > {
    * 提示和声明 navigationBarTextStyle: 'black' | 'white' 类型冲突, 需要显示声明类型
    */
   config : Config = {
-    navigationBarTitleText: '个人中心'
+    navigationBarTitleText: '我的'
   }
 
   componentWillReceiveProps(nextProps) {
     let nextInfo = nextProps.user.info;
+    let {info} = this.state;
     if (nextInfo) {
-      this.ts = new Date().getTime();
-      this.setState({info: nextProps.user.info});
-      return;
+      if(JSON.stringify(info) !== JSON.stringify(nextInfo)){
+        this.setState({info: nextProps.user.info});
+      }
     } else {
       this.setState({info: undefined, code: 0});
       this.pullHandle();
@@ -106,7 +107,7 @@ any > {
           .props
           .fetchInfo();
         clearInterval(this.timer);
-        this.setState({code: loginover, info: undefined});
+        this.setState({code: loginover});
         return;
       }
       if (loginover != 0) {

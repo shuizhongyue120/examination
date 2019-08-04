@@ -3,7 +3,7 @@ import Taro, {Component, Config} from '@tarojs/taro'
 import {Provider} from '@tarojs/redux'
 
 import Index from './pages/index'
-import {goLogin, getLoginToken, checkLogin} from "./function/user";
+import {getLoginToken, checkLogin} from "./function/user";
 import configStore from './store'
 
 import './app.css'
@@ -15,6 +15,8 @@ import "taro-ui/dist/weapp/css/index.css";
 const store = configStore()
 
 class App extends Component {
+
+  private lastValidTs = new Date().getTime();
 
   /**
    * 指定config的类型声明为: Taro.Config
@@ -28,6 +30,7 @@ class App extends Component {
       'pages/index/index',
       "pages/book/index",
       "pages/paper/index",
+      "pages/answer/index",
       "pages/favor/index",
       'pages/my/index',
       'pages/errorbook/index',
@@ -61,10 +64,14 @@ class App extends Component {
     }
   }
   componentDidShow() {
+    let diff = new Date().getTime()-  this.lastValidTs;
+    console.log("show diff", diff);
     this.checkUser();
   }
 
-  componentDidHide() {}
+  componentDidHide() {
+    this.lastValidTs = new Date().getTime();
+  }
 
   componentDidCatchError() {}
 
@@ -83,17 +90,6 @@ class App extends Component {
       .then(user => {
         let {encryptedData, iv} = user;
         getLoginToken(encryptedData, iv).then(() => {});
-      })
-  }
-
-  private loginAndTokenHandle() {
-    Taro
-      .getUserInfo()
-      .then(user => {
-        let {encryptedData, iv} = user;
-        goLogin(encryptedData, iv).then(() => {
-          this.tokenHandle();
-        });
       })
   }
 

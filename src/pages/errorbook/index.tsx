@@ -56,7 +56,7 @@ PageState > {
    * 提示和声明 navigationBarTextStyle: 'black' | 'white' 类型冲突, 需要显示声明类型
    */
   config : Config = {
-    navigationBarTitleText: '选择错题集'
+    navigationBarTitleText: '错题集'
   }
 
   constructor(props, context) {
@@ -107,14 +107,13 @@ PageState > {
         </View>
 }
         <View>
-          {list.map(item => (
-            <View key={id} class="paper_item">
-              <Text>{id}、{item}</Text>
+          {list.map((item, index) => (
+            <View  key={"book_" + index} class="paper_item">
+              <Text>{index+1}、{item}</Text>
               <Button
                 data-category={item}
                 size="mini"
                 className='item_btn'
-                type='primary'
                 onClick={this.enterPaperHandle}>查看错题</Button>
             </View>
           ))

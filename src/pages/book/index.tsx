@@ -1,6 +1,6 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Button, Text } from '@tarojs/components'
+import {View, Button, Text} from '@tarojs/components'
 import {AtDivider, AtActivityIndicator} from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
@@ -8,9 +8,7 @@ import {connect} from '@tarojs/redux'
 import {fetchBooks} from '../../actions/book'
 
 import './index.css'
-//import "taro-ui/dist/weapp/css/index.css";
-
-// #region 书写注意
+//import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
 // 目前 typescript 版本还无法在装饰器模式下将 Props 注入到 Taro.Component 中的 props 属性 需要显示声明
 // connect 的参数类型并通过 interface 的方式指定 Taro.Component 子类的 props 这样才能完成类型检查和 IDE
@@ -26,14 +24,14 @@ type PageStateProps = {
 }
 
 type PageDispatchProps = {
-  fetchBooks: (id:string) => any
+  fetchBooks: (id : string) => any
 }
 
 type PageOwnProps = {}
 
 type PageState = {
   list?: any[];
-  loading?:boolean;
+  loading?: boolean;
 }
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -65,7 +63,7 @@ PageState > {
     super(props, context);
     this.state = {
       list: undefined,
-      loading:true
+      loading: true
     }
   }
 
@@ -73,23 +71,20 @@ PageState > {
     let {
       list = []
     } = nextProps.book;
-    if (!this.state.list&&list.length > 0) {
-      this.setState({list, loading:false});
+    if (!this.state.list && list.length > 0) {
+      this.setState({list, loading: false});
     }
 
   }
   componentDidMount() {
     let {id} = this.$router.params;
-    this.setState({loading:true});
+    this.setState({loading: true});
     this
       .props
       .fetchBooks(id);
   }
   componentWillUnmount() {
-    this.setState({
-      list:undefined,
-      loading:true
-    })
+    this.setState({list: undefined, loading: true})
   }
 
   componentDidShow() {}
@@ -97,33 +92,39 @@ PageState > {
   componentDidHide() {}
 
   render() {
-    let {id} = this.$router.params;
+    let {type} = this.$router.params;
     let {
-      list = [],loading
+      list = [],
+      loading
     } = this.state;
 
     return (
       <View className='book'>
-        {loading&& <View style="text-align:center;margin-top:20PX;">
+        {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
-        <AtActivityIndicator  content='加载中...'></AtActivityIndicator>
-        </View></View>
-        }
+            <AtActivityIndicator content='加载中...'></AtActivityIndicator>
+          </View>
+        </View>
+}
         <View>
-          {list.map(item => (
-            <View key={id} class="paper_item">
-              <Text>{id}、{item.subject_category}</Text>
-              <Button
+          {list.map((item, index) => (
+            <View key={"book_" + index} class="paper_item">
+              <Text>{index+1}、{item.subject_category}</Text>
+              {"0" === type && <Button
                 data-category={item.subject_category}
                 size="mini"
                 className='item_btn'
-                type='primary'
-                onClick={this.enterPaperHandle}>开始答题</Button>
+                onClick={this.enterPaperHandle}>开始答题</Button>}
+              {"1" === type && <Button
+                data-category={item.subject_category}
+                size="mini"
+                className='item_btn'
+                onClick={this.enterPaperHandle}>查看解析</Button>}
             </View>
           ))
-        }
-        
-        {0 === list.length&& !loading&& <AtDivider content='没有题目可选，请重新选择课程' fontColor='#2d8cf0' lineColor='#2d8cf0' />}
+}
+
+          {0 === list.length && !loading && <AtDivider content='没有题目可选，请重新选择课程' fontColor='#2d8cf0' lineColor='#2d8cf0'/>}
         </View>
       </View>
     )
@@ -131,10 +132,15 @@ PageState > {
   }
 
   private enterPaperHandle(e) {
-    let {id} = this.$router.params;
+    let {id, type} = this.$router.params;
     let category = e.target.dataset.category;
+    let url = "../paper/index?id=";
+    if ("1" === type) {
+      url = "../answer/index?id=";
+    }
+
     Taro.navigateTo({
-      url: "../paper/index?id=" + id + "&category=" + category
+      url: url + id + "&category=" + category
     });
   }
 }

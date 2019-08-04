@@ -1,13 +1,17 @@
 import {ComponentClass} from 'react'
-import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Text, ScrollView} from '@tarojs/components'
-import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
+import Taro, {Component, Config, Animation} from '@tarojs/taro'
+import {View, Button, Text, Progress, ScrollView} from '@tarojs/components'
+import {AtTabBar, AtRadio, AtTag, AtActivityIndicator} from 'taro-ui'
+
 import {connect} from '@tarojs/redux'
 
-import {fetch} from '../../actions/favor'
+import {fetch} from '../../actions/paper'
+import {IQuestionItem, colorGradeMap} from "../../constants/paper"
+
 import {favorPaper} from "../../function/api"
 
 import './index.css'
+//import "taro-ui/dist/weapp/css/index.css";
 
 // #region 书写注意
 //
@@ -19,24 +23,30 @@ import './index.css'
 // #endregion
 
 type PageStateProps = {
-  favor: {
-    list: any[]
+  paper: {
+    list: IQuestionItem[]
   }
 }
 
 type PageDispatchProps = {
-  fetch: () => any
+  fetch: (id, category) => any
 }
 
 type PageOwnProps = {}
 
 type PageState = {
-  course_name?: string;
-  list?: any[];
-  cur?: any;
-  loading?:boolean;
+  list?: IQuestionItem[];
+  cur?: IQuestionItem;
+  anwser?: string;
   animation?: any[];
   showCata?:boolean;
+  loading?:boolean;
+}
+
+type IProps = PageStateProps & PageDispatchProps & PageOwnProps
+
+interface Index {
+  props : IProps;
 }
 
 //查看答案解析
@@ -50,15 +60,9 @@ const overTabBar = [
   }
 ];
 
-type IProps = PageStateProps & PageDispatchProps & PageOwnProps
-
-interface Index {
-  props : IProps;
-}
-
-@connect(({favor}) => ({favor}), (dispatch) => ({
-  fetch() {
-    dispatch(fetch())
+@connect(({paper}) => ({paper}), (dispatch) => ({
+  fetch(id, category) {
+    dispatch(fetch(id, category))
   }
 }))
 class Index extends Component < IProps,
@@ -72,7 +76,7 @@ PageState > {
    * 提示和声明 navigationBarTextStyle: 'black' | 'white' 类型冲突, 需要显示声明类型
    */
   config : Config = {
-    navigationBarTitleText: '收藏夹'
+    navigationBarTitleText: '真题解析'
   }
 
   private startPosition = {
@@ -81,44 +85,43 @@ PageState > {
   };
   private moveFlag = false;
 
+
+
   constructor(props, context) {
     super(props, context);
     this.state = {
       list: undefined,
       cur: undefined,
-      course_name: "",
       loading:true,
-      showCata:false//是否展示题目目录
+      animation: undefined,
+      showCata:false, //是否展示题目目录
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    let {name} = this.$router.params;
     let {
       list = []
-    } = nextProps.favor;
-    if (!this.state.list&& list) {
-      let data = list.find(item => item.course_name === name);
-      if (data) {
-        let {subjects, course_name} = data;
-        subjects.forEach(item => {
-          item.is_favorite = 1;
-        }); 
-        this.setState({list: subjects, course_name, cur: subjects[0], loading:false});
-      }else {
-        this.setState({list: [], loading:false});
-      }
-
+    } = nextProps.paper;
+    if (!this.state.list&&list) {
+      this.setState({list, cur: list[0], loading:false});
     }
 
   }
   componentDidMount() {
-    this.setState({loading:true})
+    let {id, category} = this.$router.params;
+    this.setState({loading:true});
     this
       .props
-      .fetch();
+      .fetch(id, category);
   }
-  componentWillUnmount() {}
+  componentWillUnmount() {
+    this.setState({
+      list: undefined,
+      cur: undefined,
+      animation: undefined,
+      showCata:false, //是否展示题目目录
+    });
+  }
 
   componentDidShow() {}
 
@@ -132,78 +135,76 @@ PageState > {
       showCata =false,
       loading
     } = this.state;
-      let count = list.length;
+    let count = list.length;
     let idx = list.findIndex(item => cur.subject_id === item.subject_id);
     overTabBar[1].title = (idx + 1) + "/" + count;
     let isChoice = cur.subject_type === "choice";
-    
+
     return (
-      <View className='favor'>
-        {loading && <View style="text-align:center;margin-top:20PX;">
+      <View class="paper">
+         {loading && <View style="text-align:center;margin-top:20PX;">
           <View style="display:inline-block;">
             <AtActivityIndicator content='加载中...'></AtActivityIndicator>
           </View>
         </View>
 }
-        {0 < list.length && !loading && <ScrollView>
-          <View
-            class="question_main"
-            animation={animation}
-            onTouchstart={this
-            .touchStartHandle
-            .bind(this)}
-            onTouchmove={this
-            .touchMoveHandle
-            .bind(this)}
-            onTouchend={this
-            .touchEndHandle
-            .bind(this)}
-            style={"width:" + count * 100 + "vw;"}>
-            {list.map((item)=> {
-              let answers = JSON.parse(item.subject_answer || "{}");
-              let keys = Object
-                .keys(answers)
-                .sort();
-              let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
-              return <View class="question_wrap" key={"qus_" + item.subject_id}>
-                <View>
-                  <AtTag type='primary' active={true} size="small" circle>{isChoice
-                      ? "单选"
-                      : "简答"}</AtTag>
-                  <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
-                </View>
-                <View class="choose_wrap">
-                  {choosesRadios.map(j=>{
-                const {subject_right_answer} = item;
-                let cls= subject_right_answer === j.value?"right":"";
+      {!loading &&<ScrollView>
+        <View
+          class="question_main"
+          animation={animation}
+          onTouchstart={this
+          .touchStartHandle
+          .bind(this)}
+          onTouchmove={this
+          .touchMoveHandle
+          .bind(this)}
+          onTouchend={this
+          .touchEndHandle
+          .bind(this)} style={"width:" + count*100+"vw;"}>
+          {list.map(item => {
+            let answers = JSON.parse(item.subject_answer || "{}");
+            let keys = Object
+             .keys(answers)
+             .sort();
+           let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+            return <View class="question_wrap" key={"qus_"+item.subject_id}>
+              <View>
+                <AtTag type='primary' active={true} size="small" circle>{isChoice
+                    ? "单选"
+                    : "简答"}</AtTag>
+                <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+              </View>
 
-                 return (<View class="kcheckbox_item" data-val={j.value}>
+              <View class="choose_wrap">
+              {choosesRadios.map(j=>{
+                const {subject_right_answer} = item;
+                let cls=subject_right_answer === j.value?"right":"";
+                 return (<View class="kcheckbox_item">
                  <View class={"kcheckbox_item_icon "+ cls }/>
                  <Text class="kcheckbox_item_text">{j.label}</Text>
                </View>);
               })}
+              </View>
+              <View class="question_answer_wrap">
+                <View class="answer_title">
+                  <Text>题目解析</Text>
                 </View>
-                <View class="question_answer_wrap">
-                  <View class="answer_title">
-                    <Text>题目解析</Text>
-                  </View>
-                  <View class="answer_desc">
-                    <Text>
-                    正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
-                    </Text>
-                  </View>
-                  <View>
-                    <Text>{item.subject_tips}</Text>
-                  </View>
+                <View class="answer_desc">
+                  <Text>正确答案是 
+                    <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                  </Text>
+                </View>
+                <View>
+                  <Text>{item.subject_tips}</Text>
                 </View>
               </View>
-            })}
-          </View>
-        </ScrollView>
-}
-        {0 === list.length && !loading && <AtDivider content='暂无' fontColor='#2d8cf0' lineColor='#2d8cf0'/>}
-        <View>
-          <AtTabBar
+            
+            </View>
+          })}
+        </View>
+      </ScrollView>}
+      <View>
+      <AtTabBar
             tabList={overTabBar}
             onClick={this
             .handleOverTabBarClick
@@ -216,24 +217,33 @@ PageState > {
         {showCata && this.renderCataPan()}
       </View>
     )
-
   }
+
 //答题索引目录
-private renderCataPan(){
-  let {list = [], cur ={}} = this.state;
- return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}><View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
-     list.map(item => {
-       let cls = (item.subject_id||1) === (cur.subject_id||1)
-         ? "right"
-         : "";
-       return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-         <Text>{item.subject_id}</Text>
-       </View>
-     })
-   } </View>
- </View>
- </View>
-}
+ private renderCataPan(){
+   let {list = [], cur ={}} = this.state;
+  return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}>
+  <View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
+      list.map(item => {
+        let cls = (item.subject_my_answer)
+          ? "right"
+          : "";
+        return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
+          <Text>{item.subject_id}</Text>
+        </View>
+      })
+    } </View>
+  </View>
+  </View>
+ }
+
+ private hideCataPan(e){
+   if("cata"===e.target.dataset.cid){
+    return;
+   }
+   this.setState({showCata:false});
+ }
+
   //跳转到指定题目
   private jumpHandle(e){
     let {
@@ -247,6 +257,7 @@ private renderCataPan(){
       showCata:false
     });
   }
+
   touchStartHandle(e) {
     this.startPosition = {
       x: e.changedTouches[0].pageX,
@@ -273,11 +284,12 @@ private renderCataPan(){
     if (lenX <= -50) {
       diff = 1;
     }
-    if (lenY > 30) {
+    if(lenY>30){
       return;
     }
     let {
       list = [],
+      anwser,
       cur = {}
     } = this.state;
     let idx = list.findIndex(item => item.subject_id === cur.subject_id);
@@ -300,6 +312,9 @@ private renderCataPan(){
     }
     this.setState({
       cur: Object.assign({}, list[nextIdx]),
+      anwser: isLast
+        ? anwser
+        : "",
       animation: this.getAnimate(nextIdx)
     });
 
@@ -308,13 +323,6 @@ private renderCataPan(){
     }, 450);
 
   }
-  private hideCataPan(e){
-    if("cata"===e.target.dataset.cid){
-     return;
-    }
-    this.setState({showCata:false});
-  }
-
   getAnimate(idx) {
     let animation = Taro.createAnimation({duration: 400, timingFunction: 'ease', delay: 0})
     animation
@@ -322,14 +330,20 @@ private renderCataPan(){
       .step();
     return animation.export();
   }
-
   handleOverTabBarClick(value : number){
+    let {loading
+    } = this.state;
+    if(loading){
+      return;
+    }
+
     if(0===value){
       this.favorHandle();
     }else if(1 === value){
       this.setState({showCata:true});
     }
   }
+
   favorHandle() {
     let {
       list = [],
@@ -362,6 +376,7 @@ private renderCataPan(){
       });
     })
   }
+
 }
 
 // #region 导出注意

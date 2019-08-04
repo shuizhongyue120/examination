@@ -2,6 +2,7 @@ import {ComponentClass} from 'react'
 import Taro, {Component, Config, Animation} from '@tarojs/taro'
 import {View, Button, Text, Progress, ScrollView} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag, AtActivityIndicator} from 'taro-ui'
+
 import {connect} from '@tarojs/redux'
 
 import {fetch, submit} from '../../actions/paper'
@@ -94,7 +95,7 @@ PageState > {
    * 提示和声明 navigationBarTextStyle: 'black' | 'white' 类型冲突, 需要显示声明类型
    */
   config : Config = {
-    navigationBarTitleText: '开始考试'
+    navigationBarTitleText: '模拟考试'
   }
 
   private startPosition = {
@@ -134,6 +135,7 @@ PageState > {
     let {id, category} = this.$router.params;
     this.course_id = id;
     this.category = category;
+    Taro.setNavigationBarTitle({title:category + " 模拟考试"});
     this.setState({loading:true});
     this
       .props
@@ -235,20 +237,42 @@ PageState > {
                     : "简答"}</AtTag>
                 <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
               </View>
+
               <View class="choose_wrap">
-                <AtRadio
-                  options={choosesRadios}
-                  value={item.subject_my_answer}
-                  onClick={this
+              {choosesRadios.map(j=>{
+                const {subject_my_answer, subject_right_answer} = item;
+                let cls="";
+                if(isOver){
+                  if(subject_right_answer === j.value){
+                    cls="right";
+                  }
+                  //回答正确 并且 答案和标识（A,B,CD） 匹配
+                  if( subject_my_answer===subject_right_answer && subject_my_answer === j.value){
+                    cls="right";
+                  }
+                  //回答错误 并且 答案和标识（A,B,CD） 匹配
+                  if(subject_my_answer&& subject_my_answer!==subject_right_answer &&subject_my_answer === j.value){
+                    cls="wrong";
+                  }
+
+                }else {
+                  cls = subject_my_answer === j.value?"right": "";
+                }
+               
+                 return (<View class="kcheckbox_item" data-val={j.value} onClick={this
                   .handleChange
-                  .bind(this)}/>
+                  .bind(this)}>
+                 <View class={"kcheckbox_item_icon "+ cls }/>
+                 <Text class="kcheckbox_item_text">{j.label}</Text>
+               </View>);
+              })}
               </View>
               {isOver &&<View class="question_answer_wrap">
                 <View class="answer_title">
-                  <Text>题目解析：</Text>
+                  <Text>题目解析</Text>
                 </View>
                 <View class="answer_desc">
-                  {!item.subject_my_answer &&<Text>你未作答，答案是
+                  {!item.subject_my_answer &&<Text>你未作答，正确答案是
                       <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
                     </Text>
                   }
@@ -383,6 +407,9 @@ PageState > {
           let cls = item.subject_right_answer === item.subject_my_answer
             ? "right"
             : "wrong";
+            if(!item.subject_my_answer){
+              cls="";
+            }
           return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
             <Text>{item.subject_id}</Text>
           </View>
@@ -483,7 +510,8 @@ PageState > {
     }, 450);
 
   }
-  handleChange(value) {
+  handleChange(e) {
+    let value = e.currentTarget.dataset.val;
     let {
       list = [],
       cur = {}
