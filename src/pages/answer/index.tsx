@@ -1,6 +1,6 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config, Animation} from '@tarojs/taro'
-import {View, Button, Text, Progress, ScrollView} from '@tarojs/components'
+import {View, Button, Text, Progress, ScrollView, Image} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag, AtActivityIndicator} from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
@@ -11,6 +11,7 @@ import {IQuestionItem, colorGradeMap} from "../../constants/paper"
 import {favorPaper} from "../../function/api"
 
 import './index.css'
+import { getSubText } from '../../function';
 //import "taro-ui/dist/weapp/css/index.css";
 
 // #region 书写注意
@@ -166,13 +167,17 @@ PageState > {
             let keys = Object
              .keys(answers)
              .sort();
-           let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+           let choosesRadios = keys.map(i => ({label: answers[i], value: i}));
+           let url = item.subject_img;
             return <View class="question_wrap" key={"qus_"+item.subject_id}>
               <View>
-                <AtTag type='primary' active={true} size="small" circle>{isChoice
-                    ? "单选"
-                    : "简答"}</AtTag>
+                <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
                 <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                {url &&
+                <View style="margin-top:10px;">
+                  <Image src={url ||"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                </View>
+                }
               </View>
 
               <View class="choose_wrap">

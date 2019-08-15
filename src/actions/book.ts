@@ -3,6 +3,8 @@ import {error401Msg2code} from '../constants/index'
 import {Fetch} from '../constants/book'
 import {fetchCategory} from '../function/api'
 
+import {setLoginCode} from "../global";
+
 // 异步的action
 export function fetchBooks(id) {
   return dispatch => {
@@ -10,7 +12,7 @@ export function fetchBooks(id) {
       if (200 == res.statusCode) {
         dispatch({type: Fetch, payload: res.data});
       } else if (404 == res.statusCode || 403 == res.statusCode) {
-        Taro.setStorageSync("loginover", res.statusCode);
+        setLoginCode(res.statusCode);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
           title: "操作异常：" + res.statusCode,
@@ -18,14 +20,14 @@ export function fetchBooks(id) {
         })
       } else if (401 === res.statusCode) { //无效
         let code = error401Msg2code[res.data.error_code];
-        Taro.setStorageSync("loginover", code);
+        setLoginCode(code);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
-          title: "操作异常：" + res.statusCode,
+          title: "操作异常：" +code,
           icon: "none"
         })
       } else {
-        Taro.setStorageSync("loginover", 1);
+        setLoginCode(1);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
           title: "操作异常：" + res.statusCode,
@@ -34,7 +36,7 @@ export function fetchBooks(id) {
       }
 
     }).catch((res) => {
-      Taro.setStorageSync("loginover", 1);
+      setLoginCode(500);
       Taro.showToast({
         title: "请求异常，" + res.errMsg,
         icon: "none"

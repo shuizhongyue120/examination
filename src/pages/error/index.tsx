@@ -1,12 +1,13 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Text, ScrollView} from '@tarojs/components'
-import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
+import {View, Text, ScrollView, Image} from '@tarojs/components'
+import {AtTabBar, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
 import {connect} from '@tarojs/redux'
-
+import {IQuestionItem, colorGradeMap} from "../../constants/paper"
 import {fetch} from '../../actions/error'
 import {favorPaper} from "../../function/api"
 import './index.css'
+import { getSubText } from '../../function';
 
 // #region 书写注意
 //
@@ -19,7 +20,7 @@ import './index.css'
 
 type PageStateProps = {
   error: {
-    list: any[]
+    list: IQuestionItem[]
   }
 }
 
@@ -31,8 +32,8 @@ type PageOwnProps = {}
 
 type PageState = {
   course_name?: string;
-  list?: any[];
-  cur?: any;
+  list?: IQuestionItem[];
+  cur?: IQuestionItem;
   loading?: boolean;
   animation?: any[];
   showCata?:boolean;
@@ -101,6 +102,9 @@ PageState > {
       let data = list.find(item => item.course_name === name);
       if (data) {
         let {subjects, course_name} = data;
+        subjects.forEach((item, index) => {
+          item.idx = index + 1;
+        });
         this.setState({list: subjects, course_name, cur: subjects[0], loading: false});
       } else {
         this.setState({list: [], loading: false});
@@ -133,7 +137,6 @@ PageState > {
       let count = list.length;
     let idx = list.findIndex(item => cur.subject_id === item.subject_id);
     overTabBar[1].title = (idx + 1) + "/" + count;
-    let isChoice = cur.subject_type === "choice";
     
     return (
       <View className='error'>
@@ -162,13 +165,15 @@ PageState > {
               let keys = Object
                 .keys(answers)
                 .sort();
-              let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+              let choosesRadios = keys.map(i => ({label: answers[i], value: i}));
+              let url = item.subject_img;
               return <View class="question_wrap" key={"qus_" + item.subject_id}>
                 <View>
-                  <AtTag type='primary' active={true} size="small" circle>{isChoice
-                      ? "单选"
-                      : "简答"}</AtTag>
+                  <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
                   <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                  <View style="margin-top:10px;">
+                  <Image src={url ||"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                </View>
                 </View>
                 <View class="choose_wrap">
                 {choosesRadios.map(j=>{

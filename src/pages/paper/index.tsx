@@ -1,13 +1,14 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config, Animation} from '@tarojs/taro'
-import {View, Button, Text, Progress, ScrollView} from '@tarojs/components'
-import {AtTabBar, AtRadio, AtTag, AtActivityIndicator} from 'taro-ui'
+import {View, Button, Text, ScrollView, Image} from '@tarojs/components'
+import {AtTabBar, AtTag, AtActivityIndicator} from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
 
-import {fetch, submit} from '../../actions/paper'
+import {fetch} from '../../actions/paper'
 import {IQuestionItem, colorGradeMap} from "../../constants/paper"
 
+import { getSubText } from "../../function";
 import {favorPaper, submitPaper, fetchPaperResults} from "../../function/api"
 
 import './index.css'
@@ -127,6 +128,10 @@ PageState > {
       list = []
     } = nextProps.paper;
     if (!this.state.list&&list) {
+      list = list.map((item,index)=>{
+        item.idx = index +1;
+        return item;
+      })
       this.setState({list, cur: list[0], loading:false});
     }
 
@@ -201,8 +206,6 @@ PageState > {
       tabBar[1].title = this.formatTime(leftSecond);
     }
     
-    let isChoice = cur.subject_type === "choice";
-
     return (
       <View class="paper">
          {loading && <View style="text-align:center;margin-top:20PX;">
@@ -229,15 +232,19 @@ PageState > {
             let keys = Object
              .keys(answers)
              .sort();
-           let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+           let choosesRadios = keys.map(i => ({label: answers[i], value: i}));
+           let url = item.subject_img;
             return <View class="question_wrap" key={"qus_"+item.subject_id}>
               <View>
-                <AtTag type='primary' active={true} size="small" circle>{isChoice
-                    ? "单选"
-                    : "简答"}</AtTag>
+                <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
                 <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                {url &&
+                <View style="margin-top:10px;">
+                  <Image src={"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                </View>
+                }
               </View>
-
+      
               <View class="choose_wrap">
               {choosesRadios.map(j=>{
                 const {subject_my_answer, subject_right_answer} = item;
@@ -333,7 +340,7 @@ PageState > {
           ? "right"
           : "";
         return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-          <Text>{item.subject_id}</Text>
+          <Text>{item.idx}</Text>
         </View>
       })
     } </View>
@@ -363,6 +370,8 @@ PageState > {
     });
 
     let choiceList = list.filter(item => item.subject_type === "choice"); //单选题列表
+    let tfList = list.filter(item => item.subject_type === "trueorfalse"); //判断
+    let tftextList = list.filter(item => item.subject_type === "trueorfalsetext"); //单选题列表
     let textList = list.filter(item => item.subject_type === "text"); //简答题目列表
  
     let gColor = colorGradeMap.find(item=>(item.min<=grade && item.max>=grade));
@@ -401,6 +410,32 @@ PageState > {
           })
         } </View>
       }
+      {tfList.length > 0 &&< View class="answer_title"> 判断题 </View>}
+      {tfList.length > 0 &&
+        <View class = "answer_list"> {
+          tfList.map(item => {
+            let cls = item.subject_right_answer === item.subject_my_answer
+              ? "right"
+              : "wrong";
+            return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
+              <Text>{item.subject_id}</Text>
+            </View>
+          })
+        } </View>
+      }
+      {tftextList.length > 0 &&< View class="answer_title"> 判断简答题 </View>}
+      {tftextList.length > 0 &&
+        <View class = "answer_list"> {
+          tftextList.map(item => {
+            let cls = item.subject_right_answer === item.subject_my_answer
+              ? "right"
+              : "wrong";
+            return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
+              <Text>{item.subject_id}</Text>
+            </View>
+          })
+        } </View>
+      }
       {textList.length > 0 &&< View class="answer_title"> 简答题 </View>}
       {textList.length > 0 &&<View class="answer_list">
         {textList.map(item => {
@@ -417,7 +452,7 @@ PageState > {
         }
       </View>}
       <View style="text-align: center;">
-        <Button type='primary' onClick={this.analysisHandle.bind(this)}>查看解析</Button>
+        <Button class="item_btn" size="mini" onClick={this.analysisHandle.bind(this)}>查看解析</Button>
       </View>
     </View>
   }

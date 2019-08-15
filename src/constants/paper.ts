@@ -2,18 +2,21 @@ export const Fetch = 'FETCHSUBS'
 export const Submit = 'SUBMITSUBS'
 
 export interface IQuestionItem {
+    idx?:number | string;
     subject_id?: number;
     subject_name?: string;
     subject_grade?: number; //分数
     subject_answer?: string;
     subject_right_answer?: string;
     subject_my_answer?: string;
+    subject_img?: string;
     subject_tips?: string;
-    subject_type?: "choice" | "text"; //单选，简答
+    subject_type?:string;
     is_favorite?: number;
     hasStar?: boolean;
     subject_category?: string;
     course_id?: number;
+    exam_answer?:string;
 }
 //闭区间
 export const colorGradeMap = [
@@ -25,34 +28,28 @@ export const colorGradeMap = [
         min: 90,
         max: 99,
         color: "#1AAD19"
-    },
-    {
+    }, {
         min: 80,
         max: 89,
         color: "#7FF200"
-    },
-    {
+    }, {
         min: 70,
         max: 79,
         color: "#BFF200"
-    },
-    {
+    }, {
         min: 60,
         max: 69,
-        color: "#FFE500"
-    },
-    {
+        color: "#BFF200"
+    }, {
         min: 50,
         max: 59,
         color: "#FFB200"
-    },
-    {
+    }, {
         min: 0,
         max: 49,
         color: "#FF6B01"
     }
 ]
-
 
 /**
  * course_id

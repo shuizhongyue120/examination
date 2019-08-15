@@ -79,18 +79,18 @@ page{
 
 .answer_item, .cata_item{
     display: inline-block;
-    height: 36PX;
-    width: 36PX;
+    height: 40PX;
+    width: 40PX;
     border-radius: 50%;
     border: 1PX solid #dbdbdb;
     text-align: center;
-    margin: 6PX;
+    margin: 8PX;
 }
 
 .answer_item>text, .cata_item>text {
     display: inline-block;
-    height: 36PX;
-    line-height: 36PX;
+    height: 40PX;
+    line-height: 40PX;
 }
 .answer_item.right, .cata_item.right{
     background-color: #13ce66;
@@ -130,13 +130,13 @@ page{
 }
 .cata_wrap {
     position: fixed;
-    padding: 20PX;
+    padding: 10PX;
     box-sizing: border-box;
     z-index: 999;
     bottom:0;
     left:0;
     width: 100%;
-    height: 70vh;
+    height: 75vh;
     background: #fff;
     text-align: center;
     overflow-y: scroll;
@@ -152,12 +152,12 @@ page{
 }
 .kcheckbox_item_icon{
     display: inline-block;
-    height: 25PX;
-    width: 25PX;
+    height: 24PX;
+    width: 24PX;
     padding-right: 15PX;
     background-repeat: no-repeat;
-    background-image: url(https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/%E6%9C%AA%E9%80%89%E4%B8%AD.png?sign=bac26e620ba7fccd1ce4a21ab3d1e2b2&t=1564889426);
-    background-size: 25PX;
+    background-image: url(https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/%E6%9C%AA%E9%80%89%E4%B8%AD.png?sign=764dc02162d9e685ad2aa19c40653922&t=1564910094);
+    background-size: 24PX;
 }
 
 .kcheckbox_item_icon.right {

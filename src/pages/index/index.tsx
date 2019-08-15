@@ -5,7 +5,6 @@ import {
   Swiper,
   SwiperItem,
   Button,
-  Input,
   Picker,
   Text,
   Image
@@ -13,8 +12,10 @@ import {
 import {AtNoticebar} from 'taro-ui'
 import {connect} from '@tarojs/redux'
 import {fetchInfo, isLogin, fetchCourses} from "../../actions/user"
-import {goLogin, getLoginToken} from "../../function/user"
+import {goLogin, getLoginToken, fetchUserInfo} from "../../function/user"
 import {sendRequest} from "../../function/api"
+
+import {getUserInfo, setUserInfo, getLoginCode} from "../../global";
 import './index.css'
 
 //
@@ -76,7 +77,7 @@ any > {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      code: "0",
+      code: 0,
       info: undefined,
       isVerify: false,
       courses: undefined,
@@ -98,35 +99,21 @@ any > {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {info} = this.state;
-
-    let nextinfo = nextProps.user.info;
-    if (info && !nextinfo) {
-      this.setState({info: undefined});
-      this.checkCode();
-      return;
-    }
-    if (!info) {
-      this.setState({info: nextinfo});
-      if (nextinfo) {
-        this
-          .props
-          .fetchCourses();
-      } else {
-        this.checkCode();
-      }
-      return;
-    }
-
+    let course = this.props.user.courses;
     let nextcourses = nextProps.user.courses;
-    this.setState({
-      courses: nextcourses,
-      code: 0,
-      isVerify: !!nextcourses
-    });
-  }
-  componentDidMount() {
-    this.pullHandle();
+    if(JSON.stringify(course) === JSON.stringify(nextcourses)){
+      this.setState({
+        code: 0,
+        isVerify: !!nextcourses
+      });
+    }else {
+      this.setState({
+        courses: nextcourses,
+        code: 0,
+        isVerify: !!nextcourses
+      });
+    }
+   
   }
 
   pullHandle() {
@@ -136,24 +123,27 @@ any > {
   }
 
   private checkCode() {
-    let loginover = Taro.getStorageSync("loginover");
-    if (loginover == 201) {
-      this
-        .props
-        .fetchInfo();
-      clearInterval(this.timer);
-      this.setState({code: loginover});
-      return;
+    let loginCode =getLoginCode();
+    let info = getUserInfo();
+    if (loginCode == 201) {
+      if (info) {
+        clearInterval(this.timer);
+        this.setState({code: loginCode, info});
+        this
+          .props
+          .fetchCourses();
+        return;
+      }
     }
-    if (loginover < 0 || 4010 == loginover || 4011 == loginover || 4012 == loginover) { //未授权,未注册
+    if (loginCode < 0 || 4010 == loginCode || 4011 == loginCode || 4012 == loginCode) { //未授权,未注册
       clearInterval(this.timer);
-      this.setState({code: loginover});
+      this.setState({code: loginCode});
       Taro.switchTab({url: "../../pages/my/index"});
       return;
     }
-    if (loginover != 0) {
+    if (loginCode != 0 && loginCode != 201) {
       clearInterval(this.timer);
-      this.setState({code: loginover, course: undefined, info: undefined});
+      this.setState({code: loginCode, course: undefined, info: undefined});
       return;
     }
 
@@ -162,7 +152,9 @@ any > {
     clearInterval(this.timer);
   }
 
-  componentDidShow() {}
+  componentDidShow() {
+    this.pullHandle();
+  }
 
   componentDidHide() {}
 
@@ -170,7 +162,8 @@ any > {
     let {info} = this.state;
     let majorStr = "";
     if (info) {
-      majorStr = info.category_name + " " + info.major_name;
+     // majorStr = info.category_name + " " + info.major_name;
+      majorStr = info.major_name;
     }
 
     return majorStr;
@@ -207,20 +200,20 @@ any > {
         {msg && <View class="marjor_notice">
           <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
         </View>}
-        {(isVerify && 0 == code)
+        {(isVerify && 0 === code)
           ? this.renderVerifyGroup()
           : this.renderNoVerifyGroup()}
 
         <View style="text-align:center;">
-          {-1 == code && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
+          {-1 === code && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             授权登录
           </Button>
 }
-          {(4010 == code || 404 == code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
+          {(4010 === code || 404 === code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }
-          {(4011 == code || 1 == code) && <Button
+          {(4011 === code || 1 === code) && <Button
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
@@ -307,7 +300,7 @@ any > {
       code,
       isVerify
     } = this.state;
-    if (0 != code) {
+    if (0 != code && 201 !=code) {
       Taro.showToast({title: "未注册或登录失败，暂时无法使用该功能。", icon: "none"});
       return;
     }
@@ -383,26 +376,49 @@ any > {
       </Picker>
     </View>
   }
-
   private getUserInfo(data) {
     let {encryptedData, iv} = data.detail;
     //重新走一遍注册登录
-    goLogin(encryptedData, iv).then(res => {
-      getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    goLogin(encryptedData, iv).then(() => {
+      getLoginToken(encryptedData, iv).then(isSuc => {
+        this
+          .pullHandle
+          .bind(this);
+        if (isSuc) {
+          fetchUserInfo().then(data => {
+            setUserInfo(data.data);
+          }).catch(() => {
+            setUserInfo("");
+            Taro.showToast({title: "读取用户信息失败", icon: "none"})
+          })
+        }
+      });
     });
   }
   private loginHandle(data) {
     let {encryptedData, iv} = data.detail;
-    getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    getLoginToken(encryptedData, iv).then(isSuc => {
+      this
+        .pullHandle
+        .bind(this);
+      if (isSuc) {
+        fetchUserInfo().then(data => {
+          setUserInfo(data.data);
+        }).catch(() => {
+          setUserInfo("");
+          Taro.showToast({title: "读取用户信息失败", icon: "none"})
+        })
+      }
+    });
   }
   private enterExamHandle(e) {
     let id = e.detail.value;
     let course = this.state.courses[id];
     let idx = e.currentTarget.dataset.idx;
-   
+
     if (course) {
       Taro.navigateTo({
-        url: "../book/index?type="+ idx + "&id=" + course.course_id
+        url: "../book/index?type=" + idx + "&id=" + course.course_id
       });
     }
   }

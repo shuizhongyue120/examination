@@ -3,7 +3,7 @@ import {error401Msg2code} from '../constants/index'
 import {Fetch} from '../constants/favor'
 
 import {favorList} from "../function/api"
-
+import {setLoginCode} from "../global";
 // 异步的action
 export function fetch() {
   return dispatch => {
@@ -11,7 +11,7 @@ export function fetch() {
       if (200 == res.statusCode) {
         dispatch({type: Fetch, payload: res.data});
       } else if (404 == res.statusCode || 403 == res.statusCode) {
-        Taro.setStorageSync("loginover", res.statusCode);
+        setLoginCode(res.statusCode);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
           title: "操作异常：" + res.statusCode,
@@ -19,14 +19,14 @@ export function fetch() {
         })
       } else if (401 === res.statusCode) { //无效
         let code = error401Msg2code[res.data.error_code];
-        Taro.setStorageSync("loginover", code);
+        setLoginCode(code);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
           title: "操作异常：" + res.statusCode,
           icon: "none"
         })
       } else {
-        Taro.setStorageSync("loginover", 1);
+        setLoginCode(1);
         dispatch({type: Fetch, payload: undefined});
         Taro.showToast({
           title: "操作异常：" + res.statusCode,
@@ -34,6 +34,12 @@ export function fetch() {
         })
       }
 
+    }).catch((res) => {
+      setLoginCode(500);
+      Taro.showToast({
+        title: "请求异常，" + res.errMsg,
+        icon: "none"
+      });
     })
   }
 }

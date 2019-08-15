@@ -1,13 +1,14 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
-import {View, Text, ScrollView} from '@tarojs/components'
+import {View, Text, ScrollView, Image} from '@tarojs/components'
 import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
 import {connect} from '@tarojs/redux'
-
+import {IQuestionItem, colorGradeMap} from "../../constants/paper"
 import {fetch} from '../../actions/favor'
 import {favorPaper} from "../../function/api"
 
 import './index.css'
+import { getSubText } from '../../function';
 
 // #region 书写注意
 //
@@ -20,7 +21,7 @@ import './index.css'
 
 type PageStateProps = {
   favor: {
-    list: any[]
+    list: IQuestionItem[]
   }
 }
 
@@ -32,11 +33,11 @@ type PageOwnProps = {}
 
 type PageState = {
   course_name?: string;
-  list?: any[];
-  cur?: any;
-  loading?:boolean;
+  list?: IQuestionItem[];
+  cur?: IQuestionItem;
+  loading?: boolean;
   animation?: any[];
-  showCata?:boolean;
+  showCata?: boolean;
 }
 
 //查看答案解析
@@ -87,8 +88,8 @@ PageState > {
       list: undefined,
       cur: undefined,
       course_name: "",
-      loading:true,
-      showCata:false//是否展示题目目录
+      loading: true,
+      showCata: false //是否展示题目目录
     }
   }
 
@@ -97,23 +98,24 @@ PageState > {
     let {
       list = []
     } = nextProps.favor;
-    if (!this.state.list&& list) {
+    if (!this.state.list && list) {
       let data = list.find(item => item.course_name === name);
       if (data) {
         let {subjects, course_name} = data;
-        subjects.forEach(item => {
+        subjects.forEach((item, index) => {
           item.is_favorite = 1;
-        }); 
-        this.setState({list: subjects, course_name, cur: subjects[0], loading:false});
-      }else {
-        this.setState({list: [], loading:false});
+          item.idx = index+1;
+        });
+        this.setState({list: subjects, course_name, cur: subjects[0], loading: false});
+      } else {
+        this.setState({list: [], loading: false});
       }
 
     }
 
   }
   componentDidMount() {
-    this.setState({loading:true})
+    this.setState({loading: true})
     this
       .props
       .fetch();
@@ -129,14 +131,13 @@ PageState > {
       list = [],
       cur = {},
       animation,
-      showCata =false,
+      showCata = false,
       loading
     } = this.state;
-      let count = list.length;
+    let count = list.length;
     let idx = list.findIndex(item => cur.subject_id === item.subject_id);
     overTabBar[1].title = (idx + 1) + "/" + count;
-    let isChoice = cur.subject_type === "choice";
-    
+
     return (
       <View className='favor'>
         {loading && <View style="text-align:center;margin-top:20PX;">
@@ -159,29 +160,37 @@ PageState > {
             .touchEndHandle
             .bind(this)}
             style={"width:" + count * 100 + "vw;"}>
-            {list.map((item)=> {
+            {list.map((item) => {
               let answers = JSON.parse(item.subject_answer || "{}");
               let keys = Object
                 .keys(answers)
                 .sort();
-              let choosesRadios = keys.map(i => ({label: answers[i], value: i}))
+              let choosesRadios = keys.map(i => ({label: answers[i], value: i}));
+              let url = item.subject_img;
               return <View class="question_wrap" key={"qus_" + item.subject_id}>
                 <View>
-                  <AtTag type='primary' active={true} size="small" circle>{isChoice
-                      ? "单选"
-                      : "简答"}</AtTag>
+                  <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
                   <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                  {url &&
+                <View style="margin-top:10px;">
+                  <Image src={url ||"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                </View>
+                }
                 </View>
                 <View class="choose_wrap">
-                  {choosesRadios.map(j=>{
-                const {subject_right_answer} = item;
-                let cls= subject_right_answer === j.value?"right":"";
+                  {choosesRadios.map(j => {
+                    const {subject_right_answer} = item;
+                    let cls = subject_right_answer === j.value
+                      ? "right"
+                      : "";
 
-                 return (<View class="kcheckbox_item" data-val={j.value}>
-                 <View class={"kcheckbox_item_icon "+ cls }/>
-                 <Text class="kcheckbox_item_text">{j.label}</Text>
-               </View>);
-              })}
+                    return (
+                      <View class="kcheckbox_item" data-val={j.value}>
+                        <View class={"kcheckbox_item_icon " + cls}/>
+                        <Text class="kcheckbox_item_text">{j.label}</Text>
+                      </View>
+                    );
+                  })}
                 </View>
                 <View class="question_answer_wrap">
                   <View class="answer_title">
@@ -189,7 +198,8 @@ PageState > {
                   </View>
                   <View class="answer_desc">
                     <Text>
-                    正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
+                      正确答案是
+                      <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
                     </Text>
                   </View>
                   <View>
@@ -218,33 +228,47 @@ PageState > {
     )
 
   }
-//答题索引目录
-private renderCataPan(){
-  let {list = [], cur ={}} = this.state;
- return  <View class="cata_mask" onClick={this.hideCataPan.bind(this)}><View class="cata_wrap" data-cid="cata"><View class = "cata_list" > {
-     list.map(item => {
-       let cls = (item.subject_id||1) === (cur.subject_id||1)
-         ? "right"
-         : "";
-       return <View class={"cata_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-         <Text>{item.subject_id}</Text>
-       </View>
-     })
-   } </View>
- </View>
- </View>
+  //答题索引目录
+  private renderCataPan() {
+    let {
+      list = [],
+      cur = {}
+    } = this.state;
+    return <View class="cata_mask" onClick={this
+      .hideCataPan
+      .bind(this)}>
+      <View class="cata_wrap" data-cid="cata">
+        <View class="cata_list">
+          {list.map(item => {
+            let cls = (item.subject_id || 1) === (cur.subject_id || 1)
+              ? "right"
+              : "";
+            return <View
+              class={"cata_item " + cls}
+              key={"ans_" + item.subject_id}
+              data-sid={item.subject_id}
+              onClick={this
+              .jumpHandle
+              .bind(this)}>
+              <Text>{item.idx}</Text>
+            </View>
+          })
 }
+        </View>
+      </View>
+    </View>
+  }
   //跳转到指定题目
-  private jumpHandle(e){
+  private jumpHandle(e) {
     let {
       list = []
     } = this.state;
     let sid = e.currentTarget.dataset.sid;
-    let idx = list.findIndex(item=>item.subject_id === sid);
+    let idx = list.findIndex(item => item.subject_id === sid);
     this.setState({
       cur: Object.assign({}, list[idx]),
       animation: this.getAnimate(idx),
-      showCata:false
+      showCata: false
     });
   }
   touchStartHandle(e) {
@@ -308,11 +332,11 @@ private renderCataPan(){
     }, 450);
 
   }
-  private hideCataPan(e){
-    if("cata"===e.target.dataset.cid){
-     return;
+  private hideCataPan(e) {
+    if ("cata" === e.target.dataset.cid) {
+      return;
     }
-    this.setState({showCata:false});
+    this.setState({showCata: false});
   }
 
   getAnimate(idx) {
@@ -323,11 +347,11 @@ private renderCataPan(){
     return animation.export();
   }
 
-  handleOverTabBarClick(value : number){
-    if(0===value){
+  handleOverTabBarClick(value : number) {
+    if (0 === value) {
       this.favorHandle();
-    }else if(1 === value){
-      this.setState({showCata:true});
+    } else if (1 === value) {
+      this.setState({showCata: true});
     }
   }
   favorHandle() {
@@ -347,7 +371,7 @@ private renderCataPan(){
         return item;
       });
 
-      this.setState({list,cur});
+      this.setState({list, cur});
       Taro.showToast({
         title: action
           ? "收藏成功"

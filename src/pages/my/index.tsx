@@ -5,8 +5,8 @@ import {AtList, AtListItem} from "taro-ui"
 import {connect} from '@tarojs/redux'
 
 import {fetchInfo, isLogin, loginOut} from "../../actions/user"
-import {goLogin, getLoginToken} from "../../function/user"
-
+import {goLogin, getLoginToken, fetchUserInfo} from "../../function/user"
+import {getUserInfo, setUserInfo, getLoginCode} from "../../global";
 import './index.css'
 //import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
@@ -19,7 +19,7 @@ import './index.css'
 
 type PageStateProps = {
   user: {
-    info: null,
+    info: undefined,
     logined: false
   }
 }
@@ -52,22 +52,11 @@ interface Index {
 class Index extends Component < IProps,
 any > {
   private timer = 0;
-  private ts = 0;
-  private codeTxt = {
-    "0": "empty",
-    "-1": "授权登录",
-    "201": "退出登录",
-    "4010": "一键注册",
-    "4011": "重新登录",
-    "4012": "重新登录",
-    "1": "重新登录",
-    "404": "一键注册"
-  };
 
   constructor(props, context) {
     super(props, context);
     this.state = {
-      code: "0",
+      code: 0,
       info: undefined
     };
 
@@ -84,35 +73,23 @@ any > {
     navigationBarTitleText: '我的'
   }
 
-  componentWillReceiveProps(nextProps) {
-    let nextInfo = nextProps.user.info;
-    let {info} = this.state;
-    if (nextInfo) {
-      if(JSON.stringify(info) !== JSON.stringify(nextInfo)){
-        this.setState({info: nextProps.user.info});
-      }
-    } else {
-      this.setState({info: undefined, code: 0});
-      this.pullHandle();
-    }
-
-  }
   componentDidMount() {}
 
   pullHandle() {
     this.timer = setInterval(() => {
-      let loginover = Taro.getStorageSync("loginover");
-      if (loginover == 201) {
-        this
-          .props
-          .fetchInfo();
-        clearInterval(this.timer);
-        this.setState({code: loginover});
-        return;
+      let loginCode = getLoginCode();
+      let info = getUserInfo();
+      if (loginCode == 201) {
+        if (info) {
+          clearInterval(this.timer);
+          this.setState({code: loginCode, info});
+          return;
+        }
       }
-      if (loginover != 0) {
+
+      if (loginCode != 0 && loginCode != 201) {
         clearInterval(this.timer);
-        this.setState({code: loginover, info: undefined});
+        this.setState({code: loginCode, info: undefined});
         return;
       }
     }, 50)
@@ -122,7 +99,7 @@ any > {
   }
 
   componentDidShow() {
-    this.pullHandle(); 
+    this.pullHandle();
   }
 
   componentDidHide() {}
@@ -134,12 +111,12 @@ any > {
     } = this.state;
 
     let {
-      category_name = "暂无",
       major_name = "暂无",
       nickname = "未知",
       avatar
     } = info;
-    let major = category_name + " ● " + major_name;
+    let major = major_name;
+    //let major = category_name + " ● " + major_name;
     avatar = avatar || "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/default.jpeg?sign=3" +
       "c08d0764e6b1e93598f3860ee8fddb4&t=1564321663";
     return (
@@ -166,27 +143,18 @@ any > {
               note={"待完善....."}
               arrow='right'
               thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/desc.png?sign=e4d582d2e39738cac1660eaf9e5e33f8&t=1564650091'/>
-            <AtListItem
-              title='待补充2'
-              note={"待完善....."}
-              arrow='right'
-              thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/222.png?sign=c29d0741b7d3b72497f327a76ff29cca&t=1564217706'/>
           </AtList>
         </View>
         <View style="text-align:center;margin-top:20PX">
-          {-1 == code && <Button
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}>
+          {-1 === code && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             授权登录
           </Button>
 }
-          {(4010 == code || 404 == code) && <Button
-            open-type="getUserInfo"
-            onGetUserInfo={this.getUserInfo}>
+          {(4010 === code || 404 === code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }
-          {(4011 == code || 4012 == code || 1 == code) && <Button
+          {(4011 === code || 4012 === code || 1 === code) && <Button
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
@@ -194,8 +162,7 @@ any > {
             重新登录
           </Button>
 }
-          {201 == code && <Button
-            onClick={this
+          {201 === code && <Button onClick={this
             .loginOutHandle
             .bind(this)}>
             退出登录
@@ -208,8 +175,21 @@ any > {
 
   private getUserInfo(data) {
     let {encryptedData, iv} = data.detail;
-    goLogin(encryptedData, iv).then(res => {
-      getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    //重新走一遍注册登录
+    goLogin(encryptedData, iv).then(() => {
+      getLoginToken(encryptedData, iv).then(isSuc => {
+        this
+          .pullHandle
+          .bind(this);
+        if (isSuc) {
+          fetchUserInfo().then(data => {
+            setUserInfo(data.data);
+          }).catch(() => {
+            setUserInfo("");
+            Taro.showToast({title: "读取用户信息失败", icon: "none"})
+          })
+        }
+      });
     });
   }
 
@@ -225,15 +205,28 @@ any > {
   }
 
   private loginOutHandle() {
-    this.setState({code: "1", info: null});
+    this.setState({code: 1, info: undefined});
     this
       .props
       .loginOut();
 
   }
+
   private loginHandle(data) {
     let {encryptedData, iv} = data.detail;
-    getLoginToken(encryptedData, iv).then(this.pullHandle.bind(this));
+    getLoginToken(encryptedData, iv).then(isSuc => {
+      this
+        .pullHandle
+        .bind(this);
+      if (isSuc) {
+        fetchUserInfo().then(data => {
+          setUserInfo(data.data);
+        }).catch(() => {
+          setUserInfo("");
+          Taro.showToast({title: "读取用户信息失败", icon: "none"})
+        })
+      }
+    });
   }
 }
 
