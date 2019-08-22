@@ -6,7 +6,7 @@ import {connect} from '@tarojs/redux'
 
 import {fetchInfo, isLogin, loginOut} from "../../actions/user"
 import {goLogin, getLoginToken, fetchUserInfo} from "../../function/user"
-import {getUserInfo, setUserInfo, getLoginCode} from "../../global";
+import {getUserInfo, setUserInfo, getLoginCode, setLoginCode} from "../../global";
 import './index.css'
 //import "taro-ui/dist/weapp/css/index.css"; #region 书写注意
 //
@@ -79,20 +79,21 @@ any > {
     this.timer = setInterval(() => {
       let loginCode = getLoginCode();
       let info = getUserInfo();
-      if (loginCode == 201) {
-        if (info) {
+      if (loginCode == 201 || 403 === loginCode && info) {
           clearInterval(this.timer);
           this.setState({code: loginCode, info});
+          return;
+        
+      }else {
+        if (loginCode != 0 && loginCode != 200) {
+          clearInterval(this.timer);
+          this.setState({code: loginCode, info: undefined});
           return;
         }
       }
 
-      if (loginCode != 0 && loginCode != 201) {
-        clearInterval(this.timer);
-        this.setState({code: loginCode, info: undefined});
-        return;
-      }
-    }, 50)
+      
+    }, 200)
   }
   componentWillUnmount() {
     clearInterval(this.timer);
@@ -113,12 +114,19 @@ any > {
     let {
       major_name = "暂无",
       nickname = "未知",
+      major_id = 0,
       avatar
     } = info;
-    let major = major_name;
+    let major = major_id === -1
+      ? "未通过审核"
+      : major_name;
     //let major = category_name + " ● " + major_name;
     avatar = avatar || "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/default.jpeg?sign=3" +
       "c08d0764e6b1e93598f3860ee8fddb4&t=1564321663";
+    nickname = -1 === code
+      ? "未授权"
+      : nickname;
+
     return (
       <View className='my'>
         <View class="info_wrap">
@@ -139,9 +147,9 @@ any > {
               .bind(this)}
               thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/hat.png?sign=34148c0757a14b6c284fd5c9f53a8607&t=1564648458'/>
             <AtListItem
-              title='说明'
-              note={"待完善....."}
-              arrow='right'
+              title='提示'
+              note="注册成功后，需后台管理员审核通过后才能正常使用该小程序，如有疑问请联系管理员。"
+              extraText=""
               thumb='https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/desc.png?sign=e4d582d2e39738cac1660eaf9e5e33f8&t=1564650091'/>
           </AtList>
         </View>
@@ -154,7 +162,7 @@ any > {
             一键登录
           </Button>
 }
-          {(4011 === code || 4012 === code || 1 === code) && <Button
+          {(4011 === code || 4012 === code || 1 === code || 2010 === code) && <Button
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
@@ -162,7 +170,7 @@ any > {
             重新登录
           </Button>
 }
-          {201 === code && <Button onClick={this
+          {(201 === code || 403 === code) && <Button onClick={this
             .loginOutHandle
             .bind(this)}>
             退出登录
@@ -176,55 +184,94 @@ any > {
   private getUserInfo(data) {
     let {encryptedData, iv} = data.detail;
     //重新走一遍注册登录
-    goLogin(encryptedData, iv).then(() => {
-      getLoginToken(encryptedData, iv).then(isSuc => {
-        this
-          .pullHandle
-          .bind(this);
-        if (isSuc) {
-          fetchUserInfo().then(data => {
-            setUserInfo(data.data);
-          }).catch(() => {
-            setUserInfo("");
-            Taro.showToast({title: "读取用户信息失败", icon: "none"})
-          })
-        }
-      });
+    goLogin(encryptedData, iv).then(({
+      statusCode,
+      data = {}
+    }) => {
+      console.log("goLogin:", statusCode, data);
+      if (201 === statusCode || (400 === statusCode && (data.error_code === "wxapp_already_registered"))) { //注册成功，或者已经注册
+        getLoginToken(encryptedData, iv).then(isSuc => {
+          this.setLoginAndInfo(getLoginCode());
+          if (isSuc) {
+            this.setLoginAndInfo(getLoginCode());
+            fetchUserInfo().then(data => {
+              if (200 === data.statusCode) {
+                this.setLoginAndInfo(201, data.data);
+                setUserInfo(data.data);
+                return;
+              }
+
+              this.setLoginAndInfo(201, data.data);
+            }).catch(() => {
+              setUserInfo("");
+              Taro.showToast({title: "读取用户信息失败，请重试", icon: "none"})
+            })
+          }else {
+            //登录失败
+          }
+        });
+      } else {
+        setLoginCode(404);
+        Taro.showToast({
+          title: "操作失败，请重试：" + statusCode,
+          icon: "none"
+        })
+      }
+
     });
   }
 
   private majorHandle() {
+    let {
+      code,
+      info = {}
+    } = this.state;
     const {
-      category_name = "暂无",
-      major_name = "暂无"
-    } = this.state.info || {};
-    Taro.showToast({
-      title: "您的考试类型为 " + category_name + "，专业为 " + major_name + "；如需更改，请联系管理员。",
-      icon: "none"
-    });
+      major_name = "暂无",
+      major_id = 0
+    } = info;
+    if (-1 === code) {
+      Taro.showToast({title: "请授权登录", icon: "none"});
+      return;
+    }
+    let tips = major_id === -1
+      ? "未通过审核，请联系管理员。"
+      : "您的专业为 " + major_name + "；如需更改，请联系管理员。";
+    Taro.showToast({title: tips, icon: "none"});
   }
 
   private loginOutHandle() {
-    this.setState({code: 1, info: undefined});
     this
       .props
       .loginOut();
+      this.setState({code: 2010, info: undefined});
 
+  }
+
+  private setLoginAndInfo(code = -1, info?:any) {
+    setLoginCode(code);
+    this.setState({code, info});
   }
 
   private loginHandle(data) {
     let {encryptedData, iv} = data.detail;
     getLoginToken(encryptedData, iv).then(isSuc => {
-      this
-        .pullHandle
-        .bind(this);
+      this.setLoginAndInfo(getLoginCode());
       if (isSuc) {
         fetchUserInfo().then(data => {
-          setUserInfo(data.data);
+          if (200 === data.statusCode) {
+            this.setLoginAndInfo(201, data.data);
+            setUserInfo(data.data);
+            return;
+          }
+
+          this.setLoginAndInfo(data.statusCode);
         }).catch(() => {
           setUserInfo("");
           Taro.showToast({title: "读取用户信息失败", icon: "none"})
         })
+      }else {
+        //token 失败
       }
     });
   }

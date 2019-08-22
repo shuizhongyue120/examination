@@ -1,7 +1,8 @@
 import '@tarojs/async-await'
 import Taro from '@tarojs/taro'
 
-const base_url = "http://kobejia.club:7778/";
+//const base_url = "http://kobejia.club:7778/";
+const base_url = "https://xcx.sqxy99.com:7443/";
 
 export const sendRequest = function (method, url, data) {
     let token = Taro.getStorageSync("access_token");

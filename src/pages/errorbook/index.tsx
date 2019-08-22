@@ -71,7 +71,7 @@ PageState > {
     let {
       list = []
     } = nextProps.error;
-    if (!this.state.list && list.length > 0) {
+    if (!this.state.list && list.length >= 0) {
       this.setState({list, loading: false});
     }
 

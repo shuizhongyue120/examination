@@ -11,7 +11,7 @@ export interface IQuestionItem {
     subject_my_answer?: string;
     subject_img?: string;
     subject_tips?: string;
-    subject_type?:string;
+    subject_type?: "choice" | "text" | "trueorfalse" | "trueorfalsetext";
     is_favorite?: number;
     hasStar?: boolean;
     subject_category?: string;
@@ -80,3 +80,5 @@ subject_type
 :
 "choice"
  */
+
+ export const trueorfalseChoose:any[] = [{value:"对",label:"对"},{value:"错",label:"错"}]

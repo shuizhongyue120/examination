@@ -15,7 +15,7 @@ import {fetchInfo, isLogin, fetchCourses} from "../../actions/user"
 import {goLogin, getLoginToken, fetchUserInfo} from "../../function/user"
 import {sendRequest} from "../../function/api"
 
-import {getUserInfo, setUserInfo, getLoginCode} from "../../global";
+import {getUserInfo, setUserInfo, getLoginCode, setLoginCode} from "../../global";
 import './index.css'
 
 //
@@ -26,7 +26,7 @@ import './index.css'
 //
 // #endregion
 
-const ImgsUrl : string[] = [
+/* const ImgsUrl : string[] = [
   "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%80%83%E8" +
       "%AF%95%20(2).png?sign=9254dd2e2b96a3263be951ff24d0c80d&t=1564666435",
   "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E8%A7%A3%E6" +
@@ -35,6 +35,17 @@ const ImgsUrl : string[] = [
       "%A2%98%20(1).png?sign=d4535be0d89f73a9fbe97647da9c04f1&t=1564667885",
   "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/icon/index/%E6%94%B6%E8" +
       "%97%8F.png?sign=f86f810f1a1b4d121c02b2a6258097f0&t=1564666522"
+];
+ */
+const ImgsUrl : string[] = [
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/exam/index-icon/exam.pn" +
+      "g",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/exam/index-icon/answer." +
+      "png",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/exam/index-icon/error.p" +
+      "ng",
+  "https://6578-examination-4a5460-1259638096.tcb.qcloud.la/exam/index-icon/favor.p" +
+      "ng"
 ];
 
 type PageStateProps = {
@@ -79,7 +90,6 @@ any > {
     this.state = {
       code: 0,
       info: undefined,
-      isVerify: false,
       courses: undefined,
       course: "",
       url: "",
@@ -101,19 +111,19 @@ any > {
   componentWillReceiveProps(nextProps) {
     let course = this.props.user.courses;
     let nextcourses = nextProps.user.courses;
-    if(JSON.stringify(course) === JSON.stringify(nextcourses)){
+
+    if (JSON.stringify(course) === JSON.stringify(nextcourses) && nextcourses) {
       this.setState({
-        code: 0,
-        isVerify: !!nextcourses
+        code: 201
       });
-    }else {
+    } else {
+      let loginCode = getLoginCode();
       this.setState({
         courses: nextcourses,
-        code: 0,
-        isVerify: !!nextcourses
+        code:loginCode
       });
     }
-   
+
   }
 
   pullHandle() {
@@ -123,17 +133,16 @@ any > {
   }
 
   private checkCode() {
-    let loginCode =getLoginCode();
+    let loginCode = getLoginCode();
     let info = getUserInfo();
-    if (loginCode == 201) {
-      if (info) {
-        clearInterval(this.timer);
-        this.setState({code: loginCode, info});
-        this
-          .props
-          .fetchCourses();
-        return;
-      }
+    if (loginCode == 201 && info) {
+      clearInterval(this.timer);
+      this.setState({code: loginCode, info});
+      this
+        .props
+        .fetchCourses();
+      return;
+
     }
     if (loginCode < 0 || 4010 == loginCode || 4011 == loginCode || 4012 == loginCode) { //未授权,未注册
       clearInterval(this.timer);
@@ -141,7 +150,7 @@ any > {
       Taro.switchTab({url: "../../pages/my/index"});
       return;
     }
-    if (loginCode != 0 && loginCode != 201) {
+    if (loginCode != 0 && loginCode != 200) {
       clearInterval(this.timer);
       this.setState({code: loginCode, course: undefined, info: undefined});
       return;
@@ -159,20 +168,32 @@ any > {
   componentDidHide() {}
 
   private getNoticeMsg() {
-    let {info} = this.state;
-    let majorStr = "";
-    if (info) {
-     // majorStr = info.category_name + " " + info.major_name;
-      majorStr = info.major_name;
+    let {info, code} = this.state;
+    let res = {
+      majorStr: "",
+      cls: ""
+    };
+
+    if (code === 403) {
+      res = {
+        majorStr: "您还未通过审核，请联系管理员。",
+        cls: ""
+      };
+    } else if (code === 0 || code === 201) {
+      if (info) {
+        res = {
+          majorStr: info.major_name,
+          cls: "act"
+        };
+      }
     }
 
-    return majorStr;
+    return res;
   }
 
   render() {
-    let {code, isVerify, url, method, param} = this.state;
-
-    let msg = this.getNoticeMsg();
+    let {code, url, method, param} = this.state;
+    let notice = this.getNoticeMsg();
     return (
       <View className='index'>
         <Swiper
@@ -184,25 +205,21 @@ any > {
           autoplay>
           <SwiperItem>
             <image
-              mode="scaleToFill"
-              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/1.jpg?sign=38cf9db0ca42ad03813474c627883adf&t=1563608704"></image>
+              src="cloud://examination-4a5460.6578-examination-4a5460/exam/banner/1.jpg"></image>
           </SwiperItem>
           <SwiperItem>
             <image
-              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/2.jpg?sign=fbe75495cf7add454e2e528fbe81b913&t=1563608814"></image>
-          </SwiperItem>
-          <SwiperItem>
-            <image
-              mode="scaleToFill"
-              src="https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/3.png?sign=f9f9b85dd27a43eb49a0549a6f5eceb2&t=1563608735"></image>
+              src="cloud://examination-4a5460.6578-examination-4a5460/exam/banner/1.jpg"></image>
           </SwiperItem>
         </Swiper>
-        {msg && <View class="marjor_notice">
-          <AtNoticebar style="background:#13ce66;color:#fff;" icon="bell">{msg}</AtNoticebar>
+        {notice.majorStr && <View class="marjor_notice">
+          {"act" === notice.cls
+            ? <AtNoticebar className="act" icon="bell">{notice.majorStr}</AtNoticebar>
+            : <AtNoticebar icon="bell">{notice.majorStr}</AtNoticebar>}
         </View>}
-        {(isVerify && 0 === code)
+        {(201 === code)
           ? this.renderVerifyGroup()
-          : this.renderNoVerifyGroup()}
+          : this.renderNoAllowGroup()}
 
         <View style="text-align:center;">
           {-1 === code && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
@@ -213,7 +230,7 @@ any > {
             一键登录
           </Button>
 }
-          {(4011 === code || 1 === code) && <Button
+          {(4011 === code || 1 === code || 2010 === code) && <Button
             open-type="getUserInfo"
             onGetUserInfo={this
             .loginHandle
@@ -265,28 +282,28 @@ any > {
 
   }
 
-  private renderNoVerifyGroup() {
+  private renderNoAllowGroup() {
     return <View class="btn_groups">
-      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+      <View class="btn_wrap" onClick={this.noAllowHandle}>
         <View>
           <Image class="btn_img" src={ImgsUrl[0]}/>
         </View>
         <Text>模拟考试</Text>
       </View>
-      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+      <View class="btn_wrap" onClick={this.noAllowHandle}>
         <View>
           <Image class="btn_img" src={ImgsUrl[1]}/>
         </View>
         <Text>真题解析</Text>
       </View>
 
-      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+      <View class="btn_wrap" onClick={this.noAllowHandle}>
         <View>
           <Image class="btn_img" src={ImgsUrl[2]}/>
         </View>
         <Text>错题集</Text>
       </View>
-      <View class="btn_wrap" onClick={this.noVerifyHandle}>
+      <View class="btn_wrap" onClick={this.noAllowHandle}>
         <View>
           <Image class="btn_img" src={ImgsUrl[3]}/>
         </View>
@@ -294,20 +311,20 @@ any > {
       </View>
     </View>
   }
-  private noVerifyHandle() {
+  private noAllowHandle() {
     let {
       courses = [],
-      code,
-      isVerify
+      code
     } = this.state;
-    if (0 != code && 201 !=code) {
+    if (403 === code) {
+      Taro.showToast({title: "您还未通过审核，请联系管理员。", icon: "none"});
+      return;
+    }
+    if (0 != code && 201 != code) {
       Taro.showToast({title: "未注册或登录失败，暂时无法使用该功能。", icon: "none"});
       return;
     }
 
-    if (!isVerify) {
-      Taro.showToast({title: "您还未通过审核，请联系管理员。", icon: "none"});
-    }
     if (0 === courses.length) {
       Taro.showToast({title: "暂无课程，请联系管理员。", icon: "none"});
       return;
@@ -379,35 +396,63 @@ any > {
   private getUserInfo(data) {
     let {encryptedData, iv} = data.detail;
     //重新走一遍注册登录
-    goLogin(encryptedData, iv).then(() => {
-      getLoginToken(encryptedData, iv).then(isSuc => {
-        this
-          .pullHandle
-          .bind(this);
-        if (isSuc) {
-          fetchUserInfo().then(data => {
-            setUserInfo(data.data);
-          }).catch(() => {
-            setUserInfo("");
-            Taro.showToast({title: "读取用户信息失败", icon: "none"})
-          })
-        }
-      });
+    goLogin(encryptedData, iv).then(({statusCode, data={}}) => {
+      if (201 === statusCode ||(400 ===statusCode&&(data.error_code==="wxapp_already_registered"))) {//注册成功
+        getLoginToken(encryptedData, iv).then(isSuc => {
+          this.setLoginAndInfo(getLoginCode());
+          if (isSuc) {
+            fetchUserInfo().then(data => {
+              if(200 === data.statusCode){
+                this.setLoginAndInfo(201, data.data);
+                setUserInfo(data.data);
+                this
+                .props
+                .fetchCourses();
+                return;
+              }
+    
+              this.setLoginAndInfo(data.statusCode);
+            }).catch(() => {
+              setUserInfo("");
+              Taro.showToast({title: "读取用户信息失败，请重试", icon: "none"})
+            })
+          }else {
+            //to do
+          }
+        });
+      } else {
+        setLoginCode(404);
+        Taro.showToast({title: "操作失败，请重试：" + statusCode, icon: "none"})
+      }
+
     });
+  }
+  private setLoginAndInfo(code = -1, info?:any) {
+    setLoginCode(code);
+    this.setState({code, info});
   }
   private loginHandle(data) {
     let {encryptedData, iv} = data.detail;
     getLoginToken(encryptedData, iv).then(isSuc => {
-      this
-        .pullHandle
-        .bind(this);
+      this.setLoginAndInfo(getLoginCode());
       if (isSuc) {
         fetchUserInfo().then(data => {
-          setUserInfo(data.data);
+          if(200 === data.statusCode){
+            setLoginCode(201); this.setLoginAndInfo(201, data.data);
+            setUserInfo(data.data);
+            this
+            .props
+            .fetchCourses();
+            return;
+          }
+
+          this.setLoginAndInfo(data.statusCode);
         }).catch(() => {
           setUserInfo("");
-          Taro.showToast({title: "读取用户信息失败", icon: "none"})
+          Taro.showToast({title: "读取用户信息失败，请重试", icon: "none"})
         })
+      }else {
+        //todo
       }
     });
   }

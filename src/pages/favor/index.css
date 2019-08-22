@@ -3,6 +3,10 @@
 page{
     overflow-x:hidden;
 }
+.favor {
+    padding: 5px 10PX;
+    line-height: 28PX;
+}
 .question_main{
     display:flex;
     flex-direction:row;
@@ -19,7 +23,8 @@ page{
 }
 
 .question_wrap .at-tag{
-    vertical-align: top;
+    vertical-align: middle;
+    margin-top: -2PX;
 }
 
 .tabbar_wrap{
@@ -29,7 +34,7 @@ page{
 }
 
 .choose_wrap{
-    margin: 30PX 0 30PX 20PX;
+    margin: 20PX 0 20PX 20PX;
 }
 .at-radio__icon .at-icon {
     font-weight:800;
@@ -149,7 +154,7 @@ page{
 .kcheckbox_item{
     display: flex;
     flex-direction: row;
-    padding: 10PX 0;
+    padding: 8PX 0;
 }
 .kcheckbox_item_icon{
     display: inline-block;
@@ -172,4 +177,5 @@ page{
 .kcheckbox_item_text{
     display: inline-block;
     vertical-align: super;
+    margin-top: -2PX;
 }

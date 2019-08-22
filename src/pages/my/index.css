@@ -19,3 +19,8 @@
     background: #ffffff;
 }
 .my button::after{ border: none; }
+.my .at-list__item-extra {
+    -webkit-flex: 0 0 5rpx;
+    -ms-flex: 0 0 5rpx;
+    flex: 0 0 5rpx;
+}

@@ -12,9 +12,9 @@ export const login = (list) => {
 // 异步的action
 export function loginOut() {
   return dispatch => {
-    Taro.setStorageSync("loginover", "1");
     Taro.setStorageSync("access_token", "");
     Taro.setStorageSync("account_id", "");
+    setLoginCode(2010);
     setUserInfo("");
     dispatch({type: LoginOut})
   }
@@ -64,11 +64,13 @@ export function fetchCourses() {
       if (200 == res.statusCode) {
         dispatch({type: Courses, payload: res.data})
       } else if (403 == res.statusCode) { //未审核通过
-        dispatch({type: Courses, payload: undefined});
         setLoginCode(403);
-      } else if (404 == res.statusCode) {
         dispatch({type: Courses, payload: undefined});
+      
+      } else if (404 == res.statusCode) {
         setLoginCode(404);
+        dispatch({type: Courses, payload: undefined});
+        
       } else if (401 === res.statusCode) { //无效
         let code = error401Msg2code[res.data.error_code];
         setLoginCode(code);

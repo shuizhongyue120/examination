@@ -5,7 +5,7 @@
 .m_swiper image {
     width: 100%;
 }
-.marjor_notice .at-noticebar{
+.marjor_notice .at-noticebar.act{
     background:#13ce66;
     color:#fff;
 }
@@ -20,6 +20,8 @@
 .btn_groups{
     padding: 20PX;
     text-align: center;
+    width: 320PX;
+    margin: 0 auto;
 }
 .btn_wrap{
     display:inline-block;
@@ -40,3 +42,4 @@
     background: #ffffff;
 }
 .index button::after{ border: none; }
+.m_swiper image{display: inline;}

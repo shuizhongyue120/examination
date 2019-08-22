@@ -36,7 +36,7 @@ export function fetchBooks(id) {
       }
 
     }).catch((res) => {
-      setLoginCode(500);
+      //setLoginCode(500);
       Taro.showToast({
         title: "请求异常，" + res.errMsg,
         icon: "none"

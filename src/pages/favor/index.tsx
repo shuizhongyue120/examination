@@ -1,9 +1,9 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config} from '@tarojs/taro'
 import {View, Text, ScrollView, Image} from '@tarojs/components'
-import {AtTabBar, AtRadio, AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
+import {AtTabBar, AtIcon , AtTag, AtActivityIndicator, AtDivider} from 'taro-ui'
 import {connect} from '@tarojs/redux'
-import {IQuestionItem, colorGradeMap} from "../../constants/paper"
+import {IQuestionItem, trueorfalseChoose} from "../../constants/paper"
 import {fetch} from '../../actions/favor'
 import {favorPaper} from "../../function/api"
 
@@ -137,7 +137,8 @@ PageState > {
     let count = list.length;
     let idx = list.findIndex(item => cur.subject_id === item.subject_id);
     overTabBar[1].title = (idx + 1) + "/" + count;
-
+    let height =  Taro.getSystemInfoSync().windowHeight -75;
+    let heightSty = "max-height:" + height + "PX;overflow-y: scroll;";
     return (
       <View className='favor'>
         {loading && <View style="text-align:center;margin-top:20PX;">
@@ -159,7 +160,7 @@ PageState > {
             onTouchend={this
             .touchEndHandle
             .bind(this)}
-            style={"width:" + count * 100 + "vw;"}>
+            style={"width:" + count * 100 + "vw;" + heightSty}>
             {list.map((item) => {
               let answers = JSON.parse(item.subject_answer || "{}");
               let keys = Object
@@ -170,14 +171,14 @@ PageState > {
               return <View class="question_wrap" key={"qus_" + item.subject_id}>
                 <View>
                   <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
-                  <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                  <Text style="margin-left:10PX;">{item.idx}、{item.subject_name||"题目如下图所示："}（{item.subject_grade}分）</Text>
                   {url &&
-                <View style="margin-top:10px;">
-                  <Image src={url ||"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                <View style="margin-top:20PX;">
+                  <Image src={url} mode="widthFix" style="width:200PX;"/>
                 </View>
                 }
                 </View>
-                <View class="choose_wrap">
+                {"choice"===item.subject_type&&<View class="choose_wrap">
                   {choosesRadios.map(j => {
                     const {subject_right_answer} = item;
                     let cls = subject_right_answer === j.value
@@ -192,15 +193,34 @@ PageState > {
                     );
                   })}
                 </View>
+                }
+              { "trueorfalse"===item.subject_type
+              &&
+              <View class="choose_wrap">
+              {trueorfalseChoose.map((j)=>{
+                 const {subject_right_answer} = item;
+                 let cls = subject_right_answer === j.value
+                 ? "right"
+                 : "";
+                
+                return (<View class="kcheckbox_item" data-val={j.value} >
+                 <View class={"kcheckbox_item_icon "+ cls }/>
+                 <Text class="kcheckbox_item_text">{j.label}</Text>
+               </View>);
+              })}
+              </View>
+              }
                 <View class="question_answer_wrap">
                   <View class="answer_title">
-                    <Text>题目解析</Text>
+                  <Text>题目解析</Text>
                   </View>
                   <View class="answer_desc">
-                    <Text>
-                      正确答案是
-                      <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
-                    </Text>
+                  {("trueorfalse"===item.subject_type || "choice"===item.subject_type)&&<Text>答案：<Text style="font-weight: 800;">{item.subject_right_answer}</Text></Text>}
+                  {("trueorfalsetext"===item.subject_type || "text"===item.subject_type) && 
+                  <View>
+                    <Text>{item.subject_right_answer}</Text>
+                  </View>
+                }
                   </View>
                   <View>
                     <Text>{item.subject_tips}</Text>
@@ -348,9 +368,20 @@ PageState > {
   }
 
   handleOverTabBarClick(value : number) {
+    let {
+      list = [],loading
+    } = this.state;
+    if(loading){
+      return;
+    }
+    if(list.length===0){
+      return;
+    }
+
     if (0 === value) {
       this.favorHandle();
     } else if (1 === value) {
+      
       this.setState({showCata: true});
     }
   }

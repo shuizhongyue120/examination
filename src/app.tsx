@@ -5,7 +5,7 @@ import {Provider} from '@tarojs/redux'
 import Index from './pages/index'
 import {getLoginToken, checkLogin, fetchUserInfo} from "./function/user";
 import configStore from './store'
-import {setUserInfo, setLoginCode} from "./global";
+import {setUserInfo, setLoginCode, getLoginCode} from "./global";
 import './app.css'
 import "taro-ui/dist/weapp/css/index.css";
 // 如果需要在 h5 环境中开启 React Devtools 取消以下注释： if (process.env.NODE_ENV !==
@@ -17,6 +17,7 @@ const store = configStore()
 class App extends Component {
 
   private lastValidTs = new Date().getTime();
+  private retry = 0;
 
   /**
    * 指定config的类型声明为: Taro.Config
@@ -84,12 +85,12 @@ class App extends Component {
     )
   }
 
-  private tokenHandle() {
+  private tokenHandle(retry:boolean) {
     Taro
       .getUserInfo()
       .then(user => {
         let {encryptedData, iv} = user;
-        getLoginToken(encryptedData, iv).then((isSuc) => {
+        getLoginToken(encryptedData, iv, retry).then((isSuc) => {
           if (isSuc) {
             fetchUserInfo().then(data => {
               if(200 === data.statusCode){
@@ -103,6 +104,15 @@ class App extends Component {
               setLoginCode(500);
               Taro.showToast({title: "读取用户信息失败", icon: "none"})
             })
+          }else {
+            console.log("tokenHandle:", isSuc);
+            if(this.retry===0){//重试一次
+              this.retry = this.retry + 1;
+              this.tokenHandle(false);
+            }else {
+              this.retry = 0;
+            }
+            
           }
 
         });
@@ -116,11 +126,11 @@ class App extends Component {
       .then(res => {
         if (!res.authSetting['scope.userInfo']) { //未授权
           setLoginCode(-1);
-        } else {
-          if (checkLogin()) { //有token
-            setLoginCode(201);
+        } else {//已授权（但不一定注册）
+          if (checkLogin()) { //有token，已注册
             fetchUserInfo().then(data => {
               if(200 === data.statusCode){
+                setLoginCode(201);
                 setUserInfo(data.data);
                 return;
               }
@@ -132,14 +142,15 @@ class App extends Component {
               Taro.showToast({title: "读取用户信息失败", icon: "none"})
             })
 
-          } else { // 没有token
-            this.tokenHandle();
+          } else { // 没有token，可能未注册
+            setLoginCode(404);
+           // this.tokenHandle(true);
           }
         }
 
       })
       .catch(data => {
-        Taro.setStorageSync("loginover", "-1");
+        setLoginCode(-1);
         console.log("getSetting error", data);
       })
   }

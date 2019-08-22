@@ -9,7 +9,7 @@ export function fetch(id) {
   return dispatch => {
     fetchErrorList(id).then(res => {
       if (200 == res.statusCode) {
-        dispatch({type: Fetch, payload: res.data});
+        dispatch({type: Fetch, payload: res.data || []});
       } else if (404 == res.statusCode || 403 == res.statusCode) {
         setLoginCode(res.statusCode);
         dispatch({type: Fetch, payload: undefined});
@@ -34,7 +34,7 @@ export function fetch(id) {
         })
       }
     }).catch((res) => {
-      setLoginCode(500);
+      //setLoginCode(500);
       Taro.showToast({
         title: "请求异常，" + res.errMsg,
         icon: "none"

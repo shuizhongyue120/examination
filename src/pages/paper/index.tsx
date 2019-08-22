@@ -1,12 +1,12 @@
 import {ComponentClass} from 'react'
 import Taro, {Component, Config, Animation} from '@tarojs/taro'
 import {View, Button, Text, ScrollView, Image} from '@tarojs/components'
-import {AtTabBar, AtTag, AtActivityIndicator} from 'taro-ui'
+import {AtTabBar, AtTag, AtActivityIndicator, AtTextarea } from 'taro-ui'
 
 import {connect} from '@tarojs/redux'
 
 import {fetch} from '../../actions/paper'
-import {IQuestionItem, colorGradeMap} from "../../constants/paper"
+import {IQuestionItem, colorGradeMap, trueorfalseChoose} from "../../constants/paper"
 
 import { getSubText } from "../../function";
 import {favorPaper, submitPaper, fetchPaperResults} from "../../function/api"
@@ -205,7 +205,8 @@ PageState > {
       tabBar[2].title = (idx + 1) + "/" + count;
       tabBar[1].title = this.formatTime(leftSecond);
     }
-    
+    let height =  Taro.getSystemInfoSync().windowHeight -75;
+    let heightSty = "max-height:" + height + "PX;overflow-y: scroll;";
     return (
       <View class="paper">
          {loading && <View style="text-align:center;margin-top:20PX;">
@@ -226,8 +227,9 @@ PageState > {
           .bind(this)}
           onTouchend={this
           .touchEndHandle
-          .bind(this)} style={"width:" + count*100+"vw;"}>
+          .bind(this)} style={"width:" + count*100+"vw;"+heightSty}>
           {list.map(item => {
+           
             let answers = JSON.parse(item.subject_answer || "{}");
             let keys = Object
              .keys(answers)
@@ -237,33 +239,34 @@ PageState > {
             return <View class="question_wrap" key={"qus_"+item.subject_id}>
               <View>
                 <AtTag type='primary' active={true} size="small" circle>{getSubText(item.subject_type)}</AtTag>
-                <Text style="margin-left:10px;">{item.subject_name}（{item.subject_grade}分）</Text>
+                <Text style="margin-left:10PX;">{item.idx}、{item.subject_name||"题目如下图所示："}（{item.subject_grade}分）</Text>
                 {url &&
-                <View style="margin-top:10px;">
-                  <Image src={"https://6578-examination-4a5460-1259638096.tcb.qcloud.la/img/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20190812065002.jpg"}/>
+                <View style="margin-top:20PX;">
+                  <Image src={url}/>
                 </View>
                 }
               </View>
       
+              { "choice"===item.subject_type
+              &&
               <View class="choose_wrap">
               {choosesRadios.map(j=>{
-                const {subject_my_answer, subject_right_answer} = item;
                 let cls="";
                 if(isOver){
-                  if(subject_right_answer === j.value){
+                  if(item.subject_right_answer === j.value){
                     cls="right";
                   }
                   //回答正确 并且 答案和标识（A,B,CD） 匹配
-                  if( subject_my_answer===subject_right_answer && subject_my_answer === j.value){
+                  if( item.subject_my_answer===item.subject_right_answer && item.subject_my_answer === j.value){
                     cls="right";
                   }
                   //回答错误 并且 答案和标识（A,B,CD） 匹配
-                  if(subject_my_answer&& subject_my_answer!==subject_right_answer &&subject_my_answer === j.value){
+                  if(item.subject_my_answer&& item.subject_my_answer!==item.subject_right_answer &&item.subject_my_answer === j.value){
                     cls="wrong";
                   }
 
                 }else {
-                  cls = subject_my_answer === j.value?"right": "";
+                  cls = item.subject_my_answer === j.value?"right": "";
                 }
                
                  return (<View class="kcheckbox_item" data-val={j.value} onClick={this
@@ -274,25 +277,77 @@ PageState > {
                </View>);
               })}
               </View>
+              }
+
+            { "trueorfalse"===item.subject_type
+              &&
+              <View class="choose_wrap">
+              {trueorfalseChoose.map((j)=>{
+                let cls="";
+                if(isOver){
+                  if(item.subject_right_answer === j.value){
+                    cls="right";
+                  }
+                  //回答正确 并且 答案和标识 匹配
+                  if( item.subject_my_answer===item.subject_right_answer && item.subject_my_answer === j.value){
+                    cls="right";
+                  }
+                  //回答错误 并且 答案和标识 匹配
+                  if(item.subject_my_answer&& item.subject_my_answer!==item.subject_right_answer &&item.subject_my_answer === j.value){
+                    cls="wrong";
+                  }
+
+                }else {
+                  cls = item.subject_my_answer === j.value?"right": "";
+                }
+                return (<View class="kcheckbox_item" data-val={j.value} onClick={this
+                  .handleChange
+                  .bind(this)}>
+                 <View class={"kcheckbox_item_icon "+ cls }/>
+                 <Text class="kcheckbox_item_text">{j.label}</Text>
+               </View>);
+              })}
+              </View>
+              }
+
+              {("text"===item.subject_type ||"trueorfalsetext"=== item.subject_type)&&
+              <View style="margin-top:20PX;">
+               <AtTextarea
+                 value={item.subject_my_answer}
+                 count={false}
+                 onChange={this.handleTextChange.bind(this)}
+                 height={240}
+                 showConfirmBar={true}
+                 placeholder='你的答案是...'
+               />
+                <Button size="mini" className="item_btn"
+                onClick={this.handleTextSubChange} style="float:right;margin-top:20PX;">提交答案</Button>
+               </View>
+              }
+
               {isOver &&<View class="question_answer_wrap">
                 <View class="answer_title">
                   <Text>题目解析</Text>
                 </View>
                 <View class="answer_desc">
-                  {!item.subject_my_answer &&<Text>你未作答，正确答案是
-                      <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
-                    </Text>
+                  <View style="margin-bottom:10PX;">
+                  {
+                    !item.subject_my_answer &&<Text>此题您未作答；</Text>
                   }
-                  {item.subject_my_answer===item.subject_right_answer &&<Text>
-                    <Text style="font-weight: 800;color: #07c160;">回答正确</Text>
-                    ，答案是  <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
-                    </Text>
+                  {item.subject_my_answer===item.subject_right_answer 
+                    &&<Text style="font-weight: 800;">回答正确；</Text>
                   }
                   {(item.subject_my_answer&&item.subject_my_answer!==item.subject_right_answer) && <Text>你的答案是 {item.subject_my_answer}，
-                  <Text style="font-weight: 800;color: #FF6B01">回答错误</Text>
-                  ；正确答案是 <Text style="font-weight: 800;">{item.subject_right_answer}</Text>
-                  </Text>
+                    <Text style="font-weight: 800;">回答错误；</Text>
+                    </Text>
                   }
+                  </View>
+                  {("trueorfalse"===item.subject_type || "choice"===item.subject_type)&& <Text>答案：<Text style="font-weight: 800;">{item.subject_right_answer}</Text></Text>}
+                  {("trueorfalsetext"===item.subject_type || "text"===item.subject_type) && 
+                  <View>
+                    <Text>{item.subject_right_answer}</Text>
+                  </View>
+                }
                 </View>
                 <View>
                   <Text>{item.subject_tips}</Text>
@@ -361,9 +416,11 @@ PageState > {
     } = this.state;
 
     let grade = 0;
+    let total = 0;
     let rightCount = 0;
     list.forEach(item=>{
       grade = grade+ (item.subject_right_answer === item.subject_my_answer?1:0)*(item.subject_grade||0);
+      total +=(item.subject_grade||0);
       if(item.subject_right_answer === item.subject_my_answer){
         rightCount = rightCount + 1;
       }
@@ -374,22 +431,24 @@ PageState > {
     let tftextList = list.filter(item => item.subject_type === "trueorfalsetext"); //单选题列表
     let textList = list.filter(item => item.subject_type === "text"); //简答题目列表
  
-    let gColor = colorGradeMap.find(item=>(item.min<=grade && item.max>=grade));
+    let grade100Precent = Math.round((grade/total) *100)
+    let gColor = colorGradeMap.find(item=>(item.min<=grade100Precent && item.max>=grade100Precent));
+
     let sty = "background-color:" + (gColor? gColor.color: "");
 
     return <View class="answer_wrap">
       <View class="answer_grade">
         <View class="grade" style={sty}>
           <View class="grade_round">
-            <View><Text clss="text">{grade}</Text></View>
-            <View><Text>得分</Text></View>
+            <View><Text class="text">{grade}</Text></View>
+            <View style="margin-top:-5PX;"><Text>得分</Text></View>
           </View>
         
         </View>
         <View class="desc">
           <View class="desc_item">
-            <View><Text>答对的题目</Text></View>
-            <View><Text>{rightCount}</Text></View>
+            <View><Text>得分/总分</Text></View>
+            <View><Text>{grade}/{total}</Text></View>
           </View>
           <View class="desc_item">
             <View><Text>正确率</Text></View>
@@ -404,8 +463,11 @@ PageState > {
             let cls = item.subject_right_answer === item.subject_my_answer
               ? "right"
               : "wrong";
+              if(!item.subject_my_answer){
+                cls="";
+              }
             return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-              <Text>{item.subject_id}</Text>
+              <Text>{item.idx}</Text>
             </View>
           })
         } </View>
@@ -417,8 +479,11 @@ PageState > {
             let cls = item.subject_right_answer === item.subject_my_answer
               ? "right"
               : "wrong";
+              if(!item.subject_my_answer){
+                cls="";
+              }
             return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-              <Text>{item.subject_id}</Text>
+              <Text>{item.idx}</Text>
             </View>
           })
         } </View>
@@ -430,8 +495,11 @@ PageState > {
             let cls = item.subject_right_answer === item.subject_my_answer
               ? "right"
               : "wrong";
+              if(!item.subject_my_answer){
+                cls="";
+              }
             return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-              <Text>{item.subject_id}</Text>
+              <Text>{item.idx}</Text>
             </View>
           })
         } </View>
@@ -446,12 +514,12 @@ PageState > {
               cls="";
             }
           return <View class={"answer_item " + cls} key={"ans_"+item.subject_id} data-sid={item.subject_id} onClick={this.jumpHandle.bind(this)}>
-            <Text>{item.subject_id}</Text>
+            <Text>{item.idx}</Text>
           </View>
         })
         }
       </View>}
-      <View style="text-align: center;">
+      <View style="text-align: center;margin-top:10PX;margin-bottom:20PX;">
         <Button class="item_btn" size="mini" onClick={this.analysisHandle.bind(this)}>查看解析</Button>
       </View>
     </View>
@@ -545,6 +613,54 @@ PageState > {
     }, 450);
 
   }
+  handleTextChange(e) {
+    let value = e.currentTarget.value;
+    console.log(value);
+    let {
+      list = [],
+      cur = {}
+    } = this.state;
+    let idx = 0;
+    list = list.map((item, index) => {
+      if (cur.subject_id === item.subject_id) {
+        item.subject_my_answer = value;
+        idx = index;
+      }
+      return item;
+    });
+
+    this.setState({list});
+  }
+
+  handleTextSubChange(e){
+    console.log("dfsdf",e);
+    let {
+      list = [],
+      cur = {}
+    } = this.state;
+    let idx = 0;
+    list = list.map((item, index) => {
+      if (cur.subject_id === item.subject_id) {
+        idx = index;
+      }
+      return item;
+    });
+
+    setTimeout(() => {
+      let isLast = idx === list.length - 1;
+      if(isLast){
+        Taro.showToast({title:"答题完毕，请交卷。"});
+        return;
+      }
+
+      let nextIdx = idx + 1;
+      this.setState({
+        cur: Object.assign({}, list[nextIdx]),
+        animation: this.getAnimate(nextIdx)
+      });
+    }, 200);
+  }
+
   handleChange(e) {
     let value = e.currentTarget.dataset.val;
     let {
@@ -564,7 +680,7 @@ PageState > {
     setTimeout(() => {
       let isLast = idx === list.length - 1;
       if(isLast){
-        Taro.showToast({title:"您已完成考试，请交卷。"});
+        Taro.showToast({title:"答题完毕，请交卷。"});
         return;
       }
 
@@ -592,9 +708,12 @@ PageState > {
     return animation.export();
   }
   handleOverTabBarClick(value : number){
-    let {loading
+    let {loading,list=[]
     } = this.state;
     if(loading){
+      return;
+    }
+    if(list.length===0){
       return;
     }
 
@@ -609,6 +728,9 @@ PageState > {
       list = [],loading
     } = this.state;
     if(loading){
+      return;
+    }
+    if(list.length===0){
       return;
     }
     if (3 === value) {
@@ -645,6 +767,7 @@ PageState > {
     } else if (0 === value) {
       this.favorHandle();
     } else if (2 === value) {
+     
       this.setState({showCata:true});
     }
   }
