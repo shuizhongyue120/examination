@@ -50,7 +50,7 @@ export function fetchInfo() {
       setLoginCode(500);
       dispatch({type: UserInfo, payload: undefined});
       Taro.showToast({
-        title: "请求异常，" + res.errMsg,
+        title: "请求异常，" + res.statusCode,
         icon: "none"
       });
     })
@@ -83,7 +83,7 @@ export function fetchCourses() {
     }).catch((res) => {
       setLoginCode(500);
       Taro.showToast({
-        title: "请求异常，" + res.errMsg,
+        title: "请求异常，" +  res.statusCode,
         icon: "none"
       });
     })

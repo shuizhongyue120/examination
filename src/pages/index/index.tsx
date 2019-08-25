@@ -91,7 +91,6 @@ any > {
       code: 0,
       info: undefined,
       courses: undefined,
-      course: "",
       url: "",
       method: "GET",
       param: ""
@@ -114,7 +113,8 @@ any > {
 
     if (JSON.stringify(course) === JSON.stringify(nextcourses) && nextcourses) {
       this.setState({
-        code: 201
+        code: 201,
+        courses: nextcourses
       });
     } else {
       let loginCode = getLoginCode();
@@ -226,7 +226,7 @@ any > {
             授权登录
           </Button>
 }
-          {(4010 === code || 404 === code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
+          {(4010 === code || 404 === code || 500 === code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }

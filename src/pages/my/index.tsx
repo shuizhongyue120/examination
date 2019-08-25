@@ -158,7 +158,7 @@ any > {
             授权登录
           </Button>
 }
-          {(4010 === code || 404 === code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
+          {(4010 === code || 404 === code || 500===code) && <Button open-type="getUserInfo" onGetUserInfo={this.getUserInfo}>
             一键登录
           </Button>
 }
@@ -268,7 +268,7 @@ any > {
           this.setLoginAndInfo(data.statusCode);
         }).catch(() => {
           setUserInfo("");
-          Taro.showToast({title: "读取用户信息失败", icon: "none"})
+          Taro.showToast({title: "读取用户信息失败，请重试", icon: "none"})
         })
       }else {
         //token 失败
